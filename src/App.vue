@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import AppNav from '@/components/organisms/AppNav.vue'
+import InstallPrompt from '@/components/organisms/InstallPrompt.vue'
 
 const route = useRoute()
 // Full-screen, chrome-free views.
@@ -14,6 +15,7 @@ const showNav = computed(() => !['/login', '/onboarding'].includes(route.path))
       <RouterView />
     </div>
     <AppNav v-if="showNav" />
+    <InstallPrompt />
   </div>
 </template>
 
