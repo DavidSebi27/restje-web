@@ -1,18 +1,90 @@
 <script setup>
-// Placeholder shell. The real dashboard (DailyAllowanceHero + live data)
-// lands in Phase 2.
+import { onMounted } from 'vue'
+import { useDashboardStore } from '@/stores/dashboard'
+import { useAuthStore } from '@/stores/auth'
+import DailyAllowanceHero from '@/components/molecules/DailyAllowanceHero.vue'
+
+const store = useDashboardStore()
+const auth = useAuthStore()
+
+// load() runs on every dashboard mount: open the app, see today's truth.
+onMounted(() => store.load())
 </script>
 
 <template>
-  <main class="placeholder">
-    <h1>Restje</h1>
-    <p>What you have left to spend today.</p>
+  <main class="dashboard">
+    <header class="topbar">
+      <span class="brand">Restje</span>
+      <button class="logout" @click="auth.logout">Log out</button>
+    </header>
+
+    <template v-if="store.data">
+      <DailyAllowanceHero
+        :today-remaining="store.data.todayRemaining"
+        :daily-allowance="store.data.dailyAllowance"
+        :today-spent="store.data.todaySpent"
+      />
+      <p class="month">
+        {{ Number(store.data.monthRemaining).toFixed(2) }} left this month over
+        {{ store.data.daysLeft }} days
+      </p>
+      <!-- CategoryBreakdown (Phase 6) and TransactionList (Phase 5) slot in here. -->
+    </template>
+
+    <p v-else-if="store.loading" class="state">Loading…</p>
+
+    <section v-else-if="store.error === 'NEEDS_IMPORT'" class="state setup">
+      <p>Let’s set up your budget.</p>
+      <p class="muted">Import a bank export to get your first daily number.</p>
+      <!-- Becomes a link to /import in Phase 4. -->
+    </section>
+
+    <section v-else-if="store.error" class="state">
+      <p>Couldn’t load your dashboard.</p>
+      <button @click="store.load()">Retry</button>
+    </section>
   </main>
 </template>
 
 <style scoped>
-.placeholder {
+.dashboard {
+  min-height: 100vh;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+}
+.brand {
+  font-weight: 700;
+  color: var(--c-accent);
+}
+.logout {
+  background: none;
+  border: none;
+  color: var(--c-text-muted);
+  cursor: pointer;
+}
+.month {
+  text-align: center;
+  color: var(--c-text-muted);
+  margin: 0 0 var(--space-6);
+}
+.state {
   text-align: center;
   padding: var(--space-8) var(--space-4);
+}
+.state .muted {
+  color: var(--c-text-muted);
+  font-size: 0.9rem;
+}
+.state button {
+  margin-top: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+  cursor: pointer;
 }
 </style>
