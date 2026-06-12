@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
 import DailyAllowanceHero from '@/components/molecules/DailyAllowanceHero.vue'
+import TransactionList from '@/components/organisms/TransactionList.vue'
 
 const store = useDashboardStore()
 const auth = useAuthStore()
@@ -28,7 +29,12 @@ onMounted(() => store.load())
         {{ Number(store.data.monthRemaining).toFixed(2) }} left this month over
         {{ store.data.daysLeft }} days
       </p>
-      <!-- CategoryBreakdown (Phase 6) and TransactionList (Phase 5) slot in here. -->
+      <!-- CategoryBreakdown (Phase 6) slots in here. -->
+      <h2 class="section-title">Recent</h2>
+      <TransactionList
+        :transactions="store.data.recentTransactions || []"
+        @changed="store.load()"
+      />
     </template>
 
     <p v-else-if="store.loading" class="state">Loading…</p>
@@ -70,6 +76,14 @@ onMounted(() => store.load())
   text-align: center;
   color: var(--c-text-muted);
   margin: 0 0 var(--space-6);
+}
+.section-title {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+  padding: 0 var(--space-4);
+  margin: 0 0 var(--space-2);
 }
 .state {
   text-align: center;

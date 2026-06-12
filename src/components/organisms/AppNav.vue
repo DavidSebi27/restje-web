@@ -1,9 +1,10 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 
-// Bottom tab bar. Grows as the app's main views land (Transactions in Phase 5).
+// Bottom tab bar.
 const tabs = [
   { to: '/', label: 'Today' },
+  { to: '/transactions', label: 'Activity' },
   { to: '/import', label: 'Import' },
   { to: '/settings', label: 'Settings' },
 ]
