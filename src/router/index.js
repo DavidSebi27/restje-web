@@ -3,7 +3,9 @@ import { useAuthStore } from '@/stores/auth'
 
 const routes = [
   { path: '/login', component: () => import('@/views/LoginView.vue') },
+  { path: '/onboarding', component: () => import('@/views/OnboardingView.vue') },
   { path: '/', component: () => import('@/views/DashboardView.vue') },
+  { path: '/settings', component: () => import('@/views/SettingsView.vue') },
 ]
 
 const router = createRouter({
