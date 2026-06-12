@@ -36,7 +36,7 @@ onMounted(() => store.load())
     <section v-else-if="store.error === 'NEEDS_IMPORT'" class="state setup">
       <p>Let’s set up your budget.</p>
       <p class="muted">Import a bank export to get your first daily number.</p>
-      <!-- Becomes a link to /import in Phase 4. -->
+      <RouterLink to="/import" class="cta">Import a CSV</RouterLink>
     </section>
 
     <section v-else-if="store.error" class="state">
@@ -86,5 +86,14 @@ onMounted(() => store.load())
   border-radius: var(--radius-sm);
   background: var(--c-bg);
   cursor: pointer;
+}
+.state .cta {
+  display: inline-block;
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-sm);
+  background: var(--c-accent);
+  color: #fff;
+  font-weight: 600;
 }
 </style>

@@ -5,6 +5,7 @@ const routes = [
   { path: '/login', component: () => import('@/views/LoginView.vue') },
   { path: '/onboarding', component: () => import('@/views/OnboardingView.vue') },
   { path: '/', component: () => import('@/views/DashboardView.vue') },
+  { path: '/import', component: () => import('@/views/ImportView.vue') },
   { path: '/settings', component: () => import('@/views/SettingsView.vue') },
 ]
 
