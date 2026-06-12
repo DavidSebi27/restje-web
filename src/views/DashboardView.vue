@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
 import DailyAllowanceHero from '@/components/molecules/DailyAllowanceHero.vue'
+import CategoryBreakdown from '@/components/organisms/CategoryBreakdown.vue'
 import TransactionList from '@/components/organisms/TransactionList.vue'
 
 const store = useDashboardStore()
@@ -29,7 +30,7 @@ onMounted(() => store.load())
         {{ Number(store.data.monthRemaining).toFixed(2) }} left this month over
         {{ store.data.daysLeft }} days
       </p>
-      <!-- CategoryBreakdown (Phase 6) slots in here. -->
+      <CategoryBreakdown :categories="store.data.byCategory || []" />
       <h2 class="section-title">Recent</h2>
       <TransactionList
         :transactions="store.data.recentTransactions || []"
