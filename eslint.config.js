@@ -30,6 +30,16 @@ export default defineConfig([
     files: ['src/**/__tests__/*'],
   },
 
+  {
+    // Atoms are intentionally single-word (Money, etc.) — that's the atomic
+    // design naming, and these names don't collide with HTML elements.
+    name: 'app/atoms-single-word',
+    files: ['src/components/atoms/**/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
+
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
   skipFormatting,

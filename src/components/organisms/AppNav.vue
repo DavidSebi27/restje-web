@@ -24,7 +24,9 @@ const tabs = [
   bottom: 0;
   display: flex;
   border-top: 1px solid var(--c-border);
-  background: var(--c-bg);
+  background: color-mix(in srgb, var(--c-bg) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 .tab {
   flex: 1;

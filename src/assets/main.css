@@ -4,9 +4,20 @@
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
+  background: var(--c-bg);
 }
 
 a {
   color: var(--c-accent);
   text-decoration: none;
+}
+
+/* On larger screens, frame the app column so it reads as a phone-sized app. */
+@media (min-width: 520px) {
+  body {
+    background: #eef1ee;
+  }
+  #app {
+    box-shadow: var(--shadow-md);
+  }
 }

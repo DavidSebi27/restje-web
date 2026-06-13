@@ -26,10 +26,10 @@ onMounted(() => store.load())
         :daily-allowance="store.data.dailyAllowance"
         :today-spent="store.data.todaySpent"
       />
-      <p class="month">
-        {{ Number(store.data.monthRemaining).toFixed(2) }} left this month over
-        {{ store.data.daysLeft }} days
-      </p>
+      <div class="month-card">
+        <strong>{{ Number(store.data.monthRemaining).toFixed(2) }}</strong>
+        left this month over {{ store.data.daysLeft }} days
+      </div>
       <CategoryBreakdown :categories="store.data.byCategory || []" />
       <h2 class="section-title">Recent</h2>
       <TransactionList
@@ -73,10 +73,18 @@ onMounted(() => store.load())
   color: var(--c-text-muted);
   cursor: pointer;
 }
-.month {
+.month-card {
+  margin: 0 var(--space-4) var(--space-8);
+  padding: var(--space-3) var(--space-4);
+  background: var(--c-surface);
+  border-radius: var(--radius);
   text-align: center;
   color: var(--c-text-muted);
-  margin: 0 0 var(--space-6);
+  font-size: var(--text-sm);
+}
+.month-card strong {
+  color: var(--c-text);
+  font-variant-numeric: tabular-nums;
 }
 .section-title {
   font-size: 0.9rem;
