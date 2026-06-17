@@ -1,30 +1,50 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
+import { useCategoriesStore } from '@/stores/categories'
 import CategoryBar from '@/components/molecules/CategoryBar.vue'
 import Money from '@/components/atoms/Money.vue'
 
 const props = defineProps({
-  // [{ categoryId, name, type, spent }]
+  // Dashboard byCategory: [{ categoryName, emoji, total }]
   categories: { type: Array, default: () => [] },
 })
 
-function sumByType(type) {
-  return props.categories
-    .filter((c) => c.type === type)
-    .reduce((sum, c) => sum + Number(c.spent), 0)
+// Spend has no NEED/WANT on the dashboard payload; join to the category list by
+// name to recover each kind for the needs-vs-wants split.
+const catStore = useCategoriesStore()
+onMounted(() => catStore.load())
+
+const kindByName = computed(() => {
+  const map = {}
+  for (const c of catStore.items) map[c.name] = c.kind
+  return map
+})
+
+function amount(row) {
+  return Math.abs(Number(row.total))
 }
 
-const total = computed(() =>
-  props.categories.reduce((sum, c) => sum + Number(c.spent), 0),
-)
-const needTotal = computed(() => sumByType('NEED'))
-const wantTotal = computed(() => sumByType('WANT'))
-const needPct = computed(() =>
-  total.value > 0 ? (needTotal.value / total.value) * 100 : 0,
+const rows = computed(() =>
+  [...props.categories]
+    .map((r) => ({
+      key: r.categoryName,
+      label: r.emoji ? `${r.emoji} ${r.categoryName}` : r.categoryName,
+      value: amount(r),
+      kind: kindByName.value[r.categoryName] || null,
+    }))
+    .sort((a, b) => b.value - a.value),
 )
 
-const sorted = computed(() =>
-  [...props.categories].sort((a, b) => Number(b.spent) - Number(a.spent)),
+const total = computed(() => rows.value.reduce((s, r) => s + r.value, 0))
+const needTotal = computed(() =>
+  rows.value.filter((r) => r.kind === 'NEED').reduce((s, r) => s + r.value, 0),
+)
+const wantTotal = computed(() =>
+  rows.value.filter((r) => r.kind === 'WANT').reduce((s, r) => s + r.value, 0),
+)
+const splitTotal = computed(() => needTotal.value + wantTotal.value)
+const needPct = computed(() =>
+  splitTotal.value > 0 ? (needTotal.value / splitTotal.value) * 100 : 0,
 )
 </script>
 
@@ -32,7 +52,7 @@ const sorted = computed(() =>
   <section v-if="categories.length" class="breakdown">
     <h2 class="section-title">Where it went</h2>
 
-    <div class="split">
+    <div v-if="splitTotal > 0" class="split">
       <div class="split-bar">
         <div class="seg need" :style="{ width: needPct + '%' }"></div>
         <div class="seg want" :style="{ width: 100 - needPct + '%' }"></div>
@@ -44,12 +64,12 @@ const sorted = computed(() =>
     </div>
 
     <CategoryBar
-      v-for="c in sorted"
-      :key="c.categoryId || c.name"
-      :label="c.name"
-      :amount="c.spent"
+      v-for="r in rows"
+      :key="r.key"
+      :label="r.label"
+      :amount="r.value"
       :total="total"
-      :type="c.type"
+      :type="r.kind"
     />
   </section>
 </template>
@@ -76,10 +96,10 @@ const sorted = computed(() =>
   background: var(--c-surface);
 }
 .seg.need {
-  background: #2c6b4f;
+  background: var(--c-need);
 }
 .seg.want {
-  background: #b9803f;
+  background: var(--c-want);
 }
 .split-legend {
   display: flex;
@@ -96,9 +116,9 @@ const sorted = computed(() =>
   margin-right: var(--space-1);
 }
 .dot.need {
-  background: #2c6b4f;
+  background: var(--c-need);
 }
 .dot.want {
-  background: #b9803f;
+  background: var(--c-want);
 }
 </style>

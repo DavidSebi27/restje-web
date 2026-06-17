@@ -3,29 +3,38 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBudgetStore } from '@/stores/budget'
 import { useDashboardStore } from '@/stores/dashboard'
+import { confirmOnboarding } from '@/api/onboarding'
 
-// First-run confirmation screen. The first import derives suggested income +
-// recurring bills (backend); the budget store is seeded with them and the user
-// confirms or edits before we persist. Known accounts are seeded separately and
-// edited later in Settings.
+// First-run confirmation screen. The import seeds the budget store with derived
+// suggestions (income, savings, recurring bills); the user confirms or edits,
+// then we commit via /api/onboarding/confirm.
 const budget = useBudgetStore()
 const dashboard = useDashboardStore()
 const router = useRouter()
 const saving = ref(false)
 
 onMounted(() => {
-  // If we arrived here without seeded suggestions, fetch whatever exists.
-  if (!budget.loaded) budget.load()
+  // Only fetch if we arrived without seeded suggestions (e.g. direct nav).
+  if (budget.monthlyIncome == null && !budget.recurring.length) budget.load()
 })
 
 function addRecurring() {
-  budget.recurring.push({ label: '', amount: '0', dayOfMonth: 1 })
+  budget.recurring.push({ name: '', amount: '0', dayOfMonth: 1, categoryId: null })
 }
 
 async function confirm() {
   saving.value = true
   try {
-    await budget.save()
+    await confirmOnboarding({
+      monthlyIncome: budget.monthlyIncome,
+      savingsTarget: budget.savingsTarget,
+      recurringExpenses: budget.recurring.map((r) => ({
+        name: r.name,
+        amount: r.amount,
+        dayOfMonth: r.dayOfMonth,
+        categoryId: r.categoryId ?? null,
+      })),
+    })
     await dashboard.load()
     router.push('/')
   } finally {
@@ -52,7 +61,7 @@ async function confirm() {
 
     <h2>Recurring bills</h2>
     <div v-for="(r, i) in budget.recurring" :key="i" class="recurring-row">
-      <input v-model="r.label" placeholder="e.g. Rent" class="grow" />
+      <input v-model="r.name" placeholder="e.g. Rent" class="grow" />
       <input v-model="r.amount" type="number" inputmode="decimal" class="amt" />
     </div>
     <button type="button" class="add" @click="addRecurring">+ Add a bill</button>

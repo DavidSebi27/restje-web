@@ -15,7 +15,14 @@ function maskIban(iban) {
 async function onTreatment(e) {
   saving.value = true
   try {
-    await updateKnownAccount(props.account.id, { treatment: e.target.value })
+    // PUT replaces the whole account; send all fields with the new treatment.
+    await updateKnownAccount(props.account.id, {
+      iban: props.account.iban,
+      label: props.account.label,
+      scope: props.account.scope,
+      treatment: e.target.value,
+      categoryId: props.account.categoryId ?? null,
+    })
     emit('changed') // parent reloads dashboard so the number reflects the change
   } finally {
     saving.value = false

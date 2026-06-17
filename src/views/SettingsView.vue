@@ -8,16 +8,9 @@ const budget = useBudgetStore()
 const dashboard = useDashboardStore()
 const saving = ref(false)
 const saved = ref(false)
+const newRow = ref({ name: '', amount: '' })
 
 onMounted(() => budget.load())
-
-function addRecurring() {
-  budget.recurring.push({ label: '', amount: '0', dayOfMonth: 1 })
-}
-
-function removeRecurring(index) {
-  budget.recurring.splice(index, 1)
-}
 
 async function onSave() {
   saving.value = true
@@ -29,6 +22,39 @@ async function onSave() {
   } finally {
     saving.value = false
   }
+}
+
+function rowPayload(r) {
+  return {
+    name: r.name,
+    amount: r.amount,
+    dayOfMonth: r.dayOfMonth || 1,
+    categoryId: r.categoryId ?? null,
+    active: r.active ?? true,
+  }
+}
+
+async function onSaveRow(r) {
+  await budget.saveRecurring(r.id, rowPayload(r))
+  await dashboard.load()
+}
+
+async function onAddRow() {
+  if (!newRow.value.name || !newRow.value.amount) return
+  await budget.addRecurring({
+    name: newRow.value.name,
+    amount: newRow.value.amount,
+    dayOfMonth: 1,
+    categoryId: null,
+    active: true,
+  })
+  newRow.value = { name: '', amount: '' }
+  await dashboard.load()
+}
+
+async function onRemoveRow(r) {
+  await budget.removeRecurring(r.id)
+  await dashboard.load()
 }
 </script>
 
@@ -47,20 +73,24 @@ async function onSave() {
         <input v-model="budget.savingsTarget" type="number" inputmode="decimal" />
       </label>
 
-      <h3>Recurring expenses</h3>
-      <div v-for="(r, i) in budget.recurring" :key="i" class="recurring-row">
-        <input v-model="r.label" placeholder="e.g. Rent" class="grow" />
-        <input v-model="r.amount" type="number" inputmode="decimal" class="amt" />
-        <button type="button" class="remove" @click="removeRecurring(i)">×</button>
-      </div>
-      <button type="button" class="add" @click="addRecurring">
-        + Add recurring expense
-      </button>
-
       <button type="button" class="save" :disabled="saving" @click="onSave">
         {{ saving ? 'Saving…' : 'Save budget' }}
       </button>
       <p v-if="saved" class="ok">Saved.</p>
+
+      <h3>Recurring expenses</h3>
+      <div v-for="r in budget.recurring" :key="r.id" class="recurring-row">
+        <input v-model="r.name" placeholder="e.g. Rent" class="grow" />
+        <input v-model="r.amount" type="number" inputmode="decimal" class="amt" />
+        <button type="button" class="rsave" @click="onSaveRow(r)">Save</button>
+        <button type="button" class="remove" @click="onRemoveRow(r)">×</button>
+      </div>
+
+      <div class="recurring-row">
+        <input v-model="newRow.name" placeholder="New bill…" class="grow" />
+        <input v-model="newRow.amount" type="number" inputmode="decimal" class="amt" />
+        <button type="button" class="add" @click="onAddRow">Add</button>
+      </div>
     </section>
 
     <section class="accounts">
@@ -79,6 +109,10 @@ h1 {
 }
 h2 {
   font-size: 1.1rem;
+  margin-top: var(--space-6);
+}
+h3 {
+  font-size: 1rem;
   margin-top: var(--space-6);
 }
 section.budget label {
@@ -100,12 +134,23 @@ input {
   display: flex;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
+  align-items: center;
 }
 .recurring-row .grow {
   flex: 1;
+  min-width: 0;
 }
 .recurring-row .amt {
-  width: 6rem;
+  width: 5.5rem;
+}
+.rsave,
+.add {
+  border: 1px solid var(--c-accent);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+  color: var(--c-accent);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
 }
 .remove {
   border: 1px solid var(--c-border);
@@ -113,13 +158,6 @@ input {
   background: var(--c-bg);
   cursor: pointer;
   padding: 0 var(--space-3);
-}
-.add {
-  background: none;
-  border: none;
-  color: var(--c-accent);
-  cursor: pointer;
-  padding: var(--space-2) 0;
 }
 .save {
   display: block;

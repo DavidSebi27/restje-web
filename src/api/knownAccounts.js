@@ -13,8 +13,10 @@ export function createKnownAccount(payload) {
   return client.post('/known-accounts', payload)
 }
 
-export function updateKnownAccount(id, patch) {
-  return client.patch(`/known-accounts/${id}`, patch)
+// Backend uses PUT with the full account body (iban, label, scope, treatment,
+// categoryId) — not a partial PATCH. Callers send the whole object.
+export function updateKnownAccount(id, payload) {
+  return client.put(`/known-accounts/${id}`, payload)
 }
 
 export function deleteKnownAccount(id) {

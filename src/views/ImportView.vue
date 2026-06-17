@@ -22,10 +22,19 @@ async function onFile(file) {
   const form = new FormData()
   form.append('file', file)
   try {
-    result.value = (await importCsv(form)).data
-    // First import derives the budget -> send the user to confirm it.
-    if (result.value.firstImport) {
-      await budget.load()
+    const summary = (await importCsv(form)).data
+    result.value = summary
+    // Cold start: the import returns derived suggestions -> confirm them.
+    if (summary.derivation) {
+      const d = summary.derivation
+      budget.monthlyIncome = d.suggestedMonthlyIncome
+      budget.savingsTarget = d.suggestedSavingsTarget
+      budget.recurring = (d.recurringExpenses || []).map((r) => ({
+        name: r.name,
+        amount: r.amount,
+        dayOfMonth: r.dayOfMonth,
+        categoryId: null,
+      }))
       router.push('/onboarding')
       return
     }

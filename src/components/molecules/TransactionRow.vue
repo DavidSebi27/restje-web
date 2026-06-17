@@ -14,9 +14,22 @@ const picking = ref(false)
 const merchant = computed(
   () =>
     props.transaction.counterparty ||
-    props.transaction.description ||
+    props.transaction.transactionType ||
     'Unknown',
 )
+
+// NEED/WANT tint comes from the category's kind, looked up by id.
+const categoryType = computed(
+  () =>
+    props.categories.find((c) => c.id === props.transaction.categoryId)?.kind ??
+    null,
+)
+
+const categoryLabel = computed(() => {
+  const t = props.transaction
+  const name = t.categoryName || 'Uncategorised'
+  return t.categoryEmoji ? `${t.categoryEmoji} ${name}` : name
+})
 
 function choose(e) {
   const categoryId = e.target.value
@@ -32,15 +45,12 @@ function choose(e) {
     <div class="main">
       <div class="meta">
         <span class="merchant">{{ merchant }}</span>
-        <span class="date">{{ transaction.date }}</span>
+        <span class="date">{{ transaction.bookingDate }}</span>
       </div>
       <div class="right">
         <Money class="amount" :amount="transaction.amount" colour />
         <button class="cat" type="button" @click="picking = !picking">
-          <CategoryPill
-            :label="transaction.categoryName || 'Uncategorised'"
-            :type="transaction.categoryType"
-          />
+          <CategoryPill :label="categoryLabel" :type="categoryType" />
         </button>
       </div>
     </div>

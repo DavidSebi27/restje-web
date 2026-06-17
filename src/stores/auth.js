@@ -32,13 +32,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function login(credentials) {
+    // Backend returns { token } only (no user object); keep the email for display.
     const { data } = await loginRequest(credentials)
-    setSession(data.token, data.user)
+    setSession(data.token, { email: credentials.email })
   }
 
   async function register(payload) {
-    const { data } = await registerRequest(payload)
-    setSession(data.token, data.user)
+    // Register returns the created user but no token, so log in right after to
+    // get the session started.
+    await registerRequest(payload)
+    await login({ email: payload.email, password: payload.password })
   }
 
   function logout() {

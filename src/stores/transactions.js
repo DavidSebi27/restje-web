@@ -9,7 +9,9 @@ export const useTransactionsStore = defineStore('transactions', () => {
   async function load(params) {
     loading.value = true
     try {
-      items.value = (await listTransactions(params)).data
+      // GET /api/transactions returns a Spring Page; unwrap to the rows.
+      const { data } = await listTransactions(params)
+      items.value = data.content ?? data
     } finally {
       loading.value = false
     }
