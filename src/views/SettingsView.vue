@@ -2,11 +2,13 @@
 import { onMounted, ref } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useDashboardStore } from '@/stores/dashboard'
-import { resetAccountData } from '@/api/account'
+import { useAuthStore } from '@/stores/auth'
+import { resetAccountData, deleteAccount } from '@/api/account'
 import KnownAccountsManager from '@/components/organisms/KnownAccountsManager.vue'
 
 const budget = useBudgetStore()
 const dashboard = useDashboardStore()
+const auth = useAuthStore()
 const saving = ref(false)
 const saved = ref(false)
 const newRow = ref({ name: '', amount: '' })
@@ -14,6 +16,10 @@ const newRow = ref({ name: '', amount: '' })
 const confirming = ref(false)
 const resetting = ref(false)
 const resetError = ref(null)
+
+const confirmingDelete = ref(false)
+const deleting = ref(false)
+const deleteError = ref(null)
 
 async function onReset() {
   resetting.value = true
@@ -31,6 +37,21 @@ async function onReset() {
         ? 'Reset isn’t available yet — backend needs DELETE /api/account/data.'
         : 'Couldn’t reset your data. Try again.'
     resetting.value = false
+  }
+}
+
+async function onDeleteAccount() {
+  deleting.value = true
+  deleteError.value = null
+  try {
+    await deleteAccount()
+    auth.logout() // clears token + routes to /login
+  } catch (e) {
+    deleteError.value =
+      e.response?.status === 404
+        ? 'Delete isn’t available yet — backend needs DELETE /api/account.'
+        : 'Couldn’t delete your account. Try again.'
+    deleting.value = false
   }
 }
 
@@ -124,43 +145,80 @@ async function onRemoveRow(r) {
 
     <section class="danger">
       <h2>Danger zone</h2>
-      <p class="hint">
-        Wipes all your transactions, budget, recurring bills and known accounts.
-        Your login stays. This can’t be undone.
-      </p>
 
-      <button
-        v-if="!confirming"
-        type="button"
-        class="danger-btn"
-        @click="confirming = true"
-      >
-        Reset all data
-      </button>
-
-      <div v-else class="confirm-row">
-        <span class="ask">Sure? This can’t be undone.</span>
-        <div class="confirm-actions">
-          <button
-            type="button"
-            class="ghost"
-            :disabled="resetting"
-            @click="confirming = false"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            class="danger-btn"
-            :disabled="resetting"
-            @click="onReset"
-          >
-            {{ resetting ? 'Resetting…' : 'Yes, delete everything' }}
-          </button>
+      <div class="danger-item">
+        <p class="hint">
+          <strong>Reset all data.</strong> Wipes your transactions, budget,
+          recurring bills and known accounts. Your login stays. Can’t be undone.
+        </p>
+        <button
+          v-if="!confirming"
+          type="button"
+          class="danger-btn"
+          @click="confirming = true"
+        >
+          Reset all data
+        </button>
+        <div v-else class="confirm-row">
+          <span class="ask">Sure? This can’t be undone.</span>
+          <div class="confirm-actions">
+            <button
+              type="button"
+              class="ghost"
+              :disabled="resetting"
+              @click="confirming = false"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="danger-btn"
+              :disabled="resetting"
+              @click="onReset"
+            >
+              {{ resetting ? 'Resetting…' : 'Yes, reset' }}
+            </button>
+          </div>
         </div>
+        <p v-if="resetError" class="err">{{ resetError }}</p>
       </div>
 
-      <p v-if="resetError" class="err">{{ resetError }}</p>
+      <div class="danger-item">
+        <p class="hint">
+          <strong>Delete account.</strong> Removes everything including your
+          login. You’ll be signed out and the account is gone for good.
+        </p>
+        <button
+          v-if="!confirmingDelete"
+          type="button"
+          class="danger-btn solid"
+          @click="confirmingDelete = true"
+        >
+          Delete my account
+        </button>
+        <div v-else class="confirm-row">
+          <span class="ask">Permanently delete your account?</span>
+          <div class="confirm-actions">
+            <button
+              type="button"
+              class="ghost"
+              :disabled="deleting"
+              @click="confirmingDelete = false"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="danger-btn solid"
+              :disabled="deleting"
+              @click="onDeleteAccount"
+            >
+              {{ deleting ? 'Deleting…' : 'Yes, delete forever' }}
+            </button>
+          </div>
+        </div>
+        <p v-if="deleteError" class="err">{{ deleteError }}</p>
+      </div>
     </section>
   </main>
 </template>
@@ -255,19 +313,31 @@ input {
   margin-top: 0;
   color: var(--c-bad);
 }
+.danger-item + .danger-item {
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--c-bad);
+}
 .danger .hint {
   font-size: 0.85rem;
   color: var(--c-text-muted);
   margin: 0 0 var(--space-3);
 }
+.danger .hint strong {
+  color: var(--c-text);
+}
 .danger-btn {
-  border: none;
+  border: 1px solid var(--c-bad);
   border-radius: var(--radius-sm);
-  background: var(--c-bad);
-  color: #fff;
+  background: transparent;
+  color: var(--c-bad);
   font-weight: 600;
   padding: var(--space-3) var(--space-4);
   cursor: pointer;
+}
+.danger-btn.solid {
+  background: var(--c-bad);
+  color: #fff;
 }
 .danger-btn:disabled {
   opacity: 0.6;

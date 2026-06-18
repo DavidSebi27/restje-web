@@ -6,3 +6,10 @@ import client from './client'
 export function resetAccountData() {
   return client.delete('/account/data')
 }
+
+// DELETE /api/account -> 204
+// Deletes everything INCLUDING the user/login (full profile wipe). Needs a
+// backend endpoint.
+export function deleteAccount() {
+  return client.delete('/account')
+}
