@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 // Bottom tab bar. Kanji sits under each label.
 const tabs = [
   { to: '/', label: 'Today', jp: '今日' },
+  { to: '/upcoming', label: 'Upcoming', jp: '予定' },
   { to: '/save', label: 'Save', jp: '貯金' },
   { to: '/import', label: 'Import', jp: '取込' },
   { to: '/settings', label: 'Settings', jp: '設定' },
@@ -31,18 +32,20 @@ const tabs = [
 }
 .tab {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-3) var(--space-1);
   color: var(--c-text-muted);
 }
 .tab .label {
-  font-size: var(--text-sm);
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 .tab .jp {
-  font-size: var(--text-xs);
+  font-size: 0.68rem;
   color: var(--c-text-muted);
   opacity: 0.7;
 }
