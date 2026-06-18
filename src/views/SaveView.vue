@@ -77,11 +77,31 @@ const tips = computed(() =>
   dataDriven.value ? trendTips.value : fallbackTips.value,
 )
 const tipsTotal = computed(() => tips.value.reduce((s, t) => s + t.save, 0))
+
+// Pace for the rest of the month — purely from the dashboard figures.
+const monthRemaining = computed(() => Number(dashboard.data?.monthRemaining ?? 0))
+const daysLeft = computed(() => Number(dashboard.data?.daysLeft ?? 0))
+const paceOver = computed(() => monthRemaining.value < 0)
+const perDay = computed(() =>
+  daysLeft.value > 0 ? monthRemaining.value / daysLeft.value : monthRemaining.value,
+)
 </script>
 
 <template>
   <main class="save">
     <h1>Save</h1>
+
+    <div v-if="dashboard.data" class="pace" :class="{ over: paceOver }">
+      <template v-if="paceOver">
+        Over budget this month by <strong>{{ eur(Math.abs(monthRemaining)) }}</strong>.
+        Ease off to climb back.
+      </template>
+      <template v-else>
+        On track — <strong>{{ eur(monthRemaining) }}</strong> left, about
+        {{ eur(perDay) }}/day for the next {{ daysLeft }} days.
+      </template>
+    </div>
+
     <h2 class="section-title">Ways to save</h2>
 
     <template v-if="tips.length">
@@ -126,7 +146,27 @@ const tipsTotal = computed(() => tips.value.reduce((s, t) => s + t.save, 0))
 }
 h1 {
   font-size: 1.4rem;
+  margin-bottom: var(--space-4);
+}
+.pace {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--c-surface);
+  border-left: 3px solid var(--c-good);
+  font-size: var(--text-sm);
+  color: var(--c-text-muted);
   margin-bottom: var(--space-6);
+}
+.pace strong {
+  color: var(--c-good);
+  font-variant-numeric: tabular-nums;
+}
+.pace.over {
+  border-left-color: var(--c-bad);
+  background: var(--c-bad-soft);
+}
+.pace.over strong {
+  color: var(--c-bad);
 }
 .section-title {
   font-size: 0.9rem;
