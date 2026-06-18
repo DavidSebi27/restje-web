@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useDashboardStore } from '@/stores/dashboard'
+import { resetAccountData } from '@/api/account'
 import KnownAccountsManager from '@/components/organisms/KnownAccountsManager.vue'
 
 const budget = useBudgetStore()
@@ -9,6 +10,27 @@ const dashboard = useDashboardStore()
 const saving = ref(false)
 const saved = ref(false)
 const newRow = ref({ name: '', amount: '' })
+
+const confirming = ref(false)
+const resetting = ref(false)
+const resetError = ref(null)
+
+async function onReset() {
+  resetting.value = true
+  resetError.value = null
+  try {
+    await resetAccountData()
+    // Hard reload guarantees clean store state; the token survives in localStorage,
+    // so we stay logged in and land on the cold-start dashboard.
+    window.location.assign('/')
+  } catch (e) {
+    resetError.value =
+      e.response?.status === 404
+        ? 'Reset isn’t available yet — backend needs DELETE /api/account/data.'
+        : 'Couldn’t reset your data. Try again.'
+    resetting.value = false
+  }
+}
 
 onMounted(() => budget.load())
 
@@ -97,6 +119,47 @@ async function onRemoveRow(r) {
       <h2>Known accounts</h2>
       <KnownAccountsManager />
     </section>
+
+    <section class="danger">
+      <h2>Danger zone</h2>
+      <p class="hint">
+        Wipes all your transactions, budget, recurring bills and known accounts.
+        Your login stays. This can’t be undone.
+      </p>
+
+      <button
+        v-if="!confirming"
+        type="button"
+        class="danger-btn"
+        @click="confirming = true"
+      >
+        Reset all data
+      </button>
+
+      <div v-else class="confirm-row">
+        <span class="ask">Sure? This can’t be undone.</span>
+        <div class="confirm-actions">
+          <button
+            type="button"
+            class="ghost"
+            :disabled="resetting"
+            @click="confirming = false"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="danger-btn"
+            :disabled="resetting"
+            @click="onReset"
+          >
+            {{ resetting ? 'Resetting…' : 'Yes, delete everything' }}
+          </button>
+        </div>
+      </div>
+
+      <p v-if="resetError" class="err">{{ resetError }}</p>
+    </section>
   </main>
 </template>
 
@@ -177,5 +240,59 @@ input {
 .ok {
   color: var(--c-good);
   font-size: 0.85rem;
+}
+
+.danger {
+  margin-top: var(--space-8);
+  padding: var(--space-4);
+  border: 1px solid var(--c-bad);
+  border-radius: var(--radius);
+  background: var(--c-bad-soft);
+}
+.danger h2 {
+  margin-top: 0;
+  color: var(--c-bad);
+}
+.danger .hint {
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+  margin: 0 0 var(--space-3);
+}
+.danger-btn {
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--c-bad);
+  color: #fff;
+  font-weight: 600;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+}
+.danger-btn:disabled {
+  opacity: 0.6;
+}
+.confirm-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.confirm-row .ask {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.confirm-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+.confirm-actions .ghost {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+  cursor: pointer;
+  padding: var(--space-3) var(--space-4);
+}
+.err {
+  color: var(--c-bad);
+  font-size: 0.85rem;
+  margin: var(--space-2) 0 0;
 }
 </style>
