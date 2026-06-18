@@ -1,9 +1,11 @@
 <script setup>
 import { onMounted, computed } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
+import { useAliasStore } from '@/stores/aliases'
 import Money from '@/components/atoms/Money.vue'
 
 const budget = useBudgetStore()
+const alias = useAliasStore()
 
 onMounted(() => budget.load())
 
@@ -44,7 +46,7 @@ const paid = computed(() =>
     <div v-if="upcoming.length" class="list">
       <div v-for="r in upcoming" :key="r.id || r.name" class="row">
         <div class="meta">
-          <span class="name">{{ r.name }}</span>
+          <span class="name">{{ alias.label(r.id, r.name) }}</span>
           <span class="when">due {{ ordinal(r.dayOfMonth || 1) }}</span>
         </div>
         <Money :amount="-Math.abs(Number(r.amount))" colour />
@@ -57,7 +59,7 @@ const paid = computed(() =>
       <div class="list muted">
         <div v-for="r in paid" :key="r.id || r.name" class="row">
           <div class="meta">
-            <span class="name">{{ r.name }}</span>
+            <span class="name">{{ alias.label(r.id, r.name) }}</span>
             <span class="when">{{ ordinal(r.dayOfMonth || 1) }}</span>
           </div>
           <Money :amount="-Math.abs(Number(r.amount))" />

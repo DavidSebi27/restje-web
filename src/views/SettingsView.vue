@@ -3,12 +3,14 @@ import { onMounted, ref } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
+import { useAliasStore } from '@/stores/aliases'
 import { resetAccountData, deleteAccount } from '@/api/account'
 import KnownAccountsManager from '@/components/organisms/KnownAccountsManager.vue'
 
 const budget = useBudgetStore()
 const dashboard = useDashboardStore()
 const auth = useAuthStore()
+const alias = useAliasStore()
 const saving = ref(false)
 const saved = ref(false)
 const newRow = ref({ name: '', amount: '', day: '' })
@@ -124,9 +126,16 @@ async function onRemoveRow(r) {
       <p v-if="saved" class="ok">Saved.</p>
 
       <h3>Recurring expenses</h3>
-      <p class="cols">name · amount · day of month it’s due</p>
+      <p class="cols">alias · amount · day of month it’s due</p>
       <div v-for="r in budget.recurring" :key="r.id" class="recurring-row">
-        <input v-model="r.name" placeholder="e.g. Rent" />
+        <div class="bill">
+          <input
+            :value="alias.map[r.id] || ''"
+            placeholder="Alias, e.g. Home insurance"
+            @input="alias.set(r.id, $event.target.value)"
+          />
+          <span class="orig" :title="r.name">{{ r.name }}</span>
+        </div>
         <input v-model="r.amount" type="number" inputmode="decimal" placeholder="€" />
         <input
           v-model.number="r.dayOfMonth"
@@ -283,12 +292,25 @@ input {
   display: grid;
   grid-template-columns: 1fr 5rem 3rem auto 2.75rem;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
-  align-items: stretch;
+  margin-bottom: var(--space-3);
+  align-items: start;
 }
 .recurring-row input {
   width: 100%;
   min-width: 0;
+}
+.bill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.bill .orig {
+  font-size: var(--text-xs);
+  color: var(--c-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .recurring-row .day {
   text-align: center;
