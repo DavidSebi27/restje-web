@@ -22,6 +22,11 @@ function addRecurring() {
   budget.recurring.push({ name: '', amount: '0', dayOfMonth: 1, categoryId: null })
 }
 
+// Onboarding bills are in-memory suggestions (no id yet), so drop by index.
+function removeBill(index) {
+  budget.recurring.splice(index, 1)
+}
+
 async function confirm() {
   saving.value = true
   try {
@@ -63,6 +68,14 @@ async function confirm() {
     <div v-for="(r, i) in budget.recurring" :key="i" class="recurring-row">
       <input v-model="r.name" placeholder="e.g. Rent" class="grow" />
       <input v-model="r.amount" type="number" inputmode="decimal" class="amt" />
+      <button
+        type="button"
+        class="remove"
+        aria-label="Remove bill"
+        @click="removeBill(i)"
+      >
+        ×
+      </button>
     </div>
     <button type="button" class="add" @click="addRecurring">+ Add a bill</button>
 
@@ -113,6 +126,16 @@ input {
 }
 .recurring-row .amt {
   width: 6rem;
+}
+.recurring-row .remove {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+  color: var(--c-text-muted);
+  cursor: pointer;
+  padding: 0 var(--space-3);
+  font-size: 1.1rem;
+  line-height: 1;
 }
 .add {
   background: none;

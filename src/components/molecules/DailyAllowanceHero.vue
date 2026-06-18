@@ -1,10 +1,11 @@
 <script setup>
 import { computed } from 'vue'
 
+// Backend serialises BigDecimal as JSON numbers, so accept both number and string.
 const props = defineProps({
-  todayRemaining: { type: String, required: true },
-  dailyAllowance: { type: String, required: true },
-  todaySpent: { type: String, required: true },
+  todayRemaining: { type: [String, Number], required: true },
+  dailyAllowance: { type: [String, Number], required: true },
+  todaySpent: { type: [String, Number], required: true },
 })
 
 const remaining = computed(() => Number(props.todayRemaining))
