@@ -11,7 +11,7 @@ const dashboard = useDashboardStore()
 const auth = useAuthStore()
 const saving = ref(false)
 const saved = ref(false)
-const newRow = ref({ name: '', amount: '' })
+const newRow = ref({ name: '', amount: '', day: '' })
 
 const confirming = ref(false)
 const resetting = ref(false)
@@ -89,11 +89,11 @@ async function onAddRow() {
   await budget.addRecurring({
     name: newRow.value.name,
     amount: newRow.value.amount,
-    dayOfMonth: 1,
+    dayOfMonth: Number(newRow.value.day) || 1,
     categoryId: null,
     active: true,
   })
-  newRow.value = { name: '', amount: '' }
+  newRow.value = { name: '', amount: '', day: '' }
   await dashboard.load()
 }
 
@@ -124,9 +124,19 @@ async function onRemoveRow(r) {
       <p v-if="saved" class="ok">Saved.</p>
 
       <h3>Recurring expenses</h3>
+      <p class="cols">name · amount · day of month it’s due</p>
       <div v-for="r in budget.recurring" :key="r.id" class="recurring-row">
         <input v-model="r.name" placeholder="e.g. Rent" />
-        <input v-model="r.amount" type="number" inputmode="decimal" />
+        <input v-model="r.amount" type="number" inputmode="decimal" placeholder="€" />
+        <input
+          v-model.number="r.dayOfMonth"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max="31"
+          placeholder="day"
+          class="day"
+        />
         <button type="button" class="rsave" @click="onSaveRow(r)">Save</button>
         <button type="button" class="remove" aria-label="Remove" @click="onRemoveRow(r)">
           ×
@@ -135,7 +145,16 @@ async function onRemoveRow(r) {
 
       <div class="recurring-row new">
         <input v-model="newRow.name" placeholder="New bill…" />
-        <input v-model="newRow.amount" type="number" inputmode="decimal" />
+        <input v-model="newRow.amount" type="number" inputmode="decimal" placeholder="€" />
+        <input
+          v-model.number="newRow.day"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max="31"
+          placeholder="day"
+          class="day"
+        />
         <button type="button" class="add" @click="onAddRow">Add</button>
       </div>
     </section>
@@ -255,9 +274,14 @@ input {
   background: var(--c-bg);
   color: var(--c-text);
 }
+.cols {
+  font-size: var(--text-xs);
+  color: var(--c-text-muted);
+  margin: 0 0 var(--space-2);
+}
 .recurring-row {
   display: grid;
-  grid-template-columns: 1fr 6rem auto 2.75rem;
+  grid-template-columns: 1fr 5rem 3rem auto 2.75rem;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
   align-items: stretch;
@@ -266,8 +290,11 @@ input {
   width: 100%;
   min-width: 0;
 }
+.recurring-row .day {
+  text-align: center;
+}
 .recurring-row.new .add {
-  grid-column: 3 / 5; /* Add spans the Save + remove columns above it */
+  grid-column: 4 / 6; /* Add spans the Save + remove columns above it */
 }
 .rsave,
 .add {
