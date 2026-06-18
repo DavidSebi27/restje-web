@@ -4,6 +4,7 @@ import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
 import { useCategoriesStore } from '@/stores/categories'
 import { useTransactionsStore } from '@/stores/transactions'
+import { useBudgetStore } from '@/stores/budget'
 import Money from '@/components/atoms/Money.vue'
 import DailyAllowanceHero from '@/components/molecules/DailyAllowanceHero.vue'
 import CategoryBreakdown from '@/components/organisms/CategoryBreakdown.vue'
@@ -13,6 +14,7 @@ const store = useDashboardStore()
 const auth = useAuthStore()
 const categories = useCategoriesStore()
 const txStore = useTransactionsStore()
+const budget = useBudgetStore()
 
 // The selected "Where it went" category filters the list below it.
 const selected = ref(null) // { key, label, id }
@@ -21,6 +23,7 @@ const selected = ref(null) // { key, label, id }
 onMounted(() => {
   store.load()
   categories.load()
+  budget.load()
 })
 
 async function selectCategory(row) {
@@ -62,9 +65,17 @@ async function onChanged() {
         :daily-allowance="store.data.dailyAllowance"
         :today-spent="store.data.todaySpent"
       />
-      <div class="month-card">
-        <Money class="m-amount" :amount="store.data.monthRemaining" colour />
-        left this month over {{ store.data.daysLeft }} days
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">Income</span>
+          <Money class="stat-val" :amount="budget.monthlyIncome ?? 0" />
+          <span class="stat-sub">this month</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Left this month</span>
+          <Money class="stat-val" :amount="store.data.monthRemaining" colour />
+          <span class="stat-sub">over {{ store.data.daysLeft }} days</span>
+        </div>
       </div>
       <CategoryBreakdown
         :categories="store.data.byCategory || []"
@@ -115,18 +126,35 @@ async function onChanged() {
   color: var(--c-text-muted);
   cursor: pointer;
 }
-.month-card {
+.stats {
+  display: flex;
+  gap: var(--space-3);
   margin: 0 var(--space-4) var(--space-8);
+}
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: var(--space-3) var(--space-4);
   background: var(--c-surface);
   border-radius: var(--radius);
   text-align: center;
-  color: var(--c-text-muted);
-  font-size: var(--text-sm);
 }
-.month-card .m-amount {
+.stat-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--c-text-muted);
+}
+.stat-val {
+  font-size: var(--text-lg);
   font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
+}
+.stat-sub {
+  font-size: var(--text-xs);
+  color: var(--c-text-muted);
 }
 .recent-head {
   display: flex;
