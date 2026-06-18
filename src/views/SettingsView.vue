@@ -21,7 +21,9 @@ async function onReset() {
   try {
     await resetAccountData()
     // Hard reload guarantees clean store state; the token survives in localStorage,
-    // so we stay logged in and land on the cold-start dashboard.
+    // so we stay logged in and land on the cold-start dashboard. The flash shows a
+    // confirmation toast once the app reloads.
+    sessionStorage.setItem('restje.flash', 'All your data was reset.')
     window.location.assign('/')
   } catch (e) {
     resetError.value =

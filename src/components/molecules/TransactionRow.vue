@@ -12,10 +12,16 @@ const emit = defineEmits(['reclassify'])
 
 const picking = ref(false)
 
+// ING uses the literal "NOTPROVIDED" when a field is absent — treat it as blank.
+function clean(s) {
+  if (!s) return ''
+  return /^not\s*provided$/i.test(s.trim()) ? '' : s
+}
+
 const merchant = computed(
   () =>
-    props.transaction.counterparty ||
-    props.transaction.transactionType ||
+    clean(props.transaction.counterparty) ||
+    clean(props.transaction.transactionType) ||
     'Unknown',
 )
 

@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
+import Money from '@/components/atoms/Money.vue'
 import DailyAllowanceHero from '@/components/molecules/DailyAllowanceHero.vue'
 import CategoryBreakdown from '@/components/organisms/CategoryBreakdown.vue'
 import TransactionList from '@/components/organisms/TransactionList.vue'
@@ -27,7 +28,7 @@ onMounted(() => store.load())
         :today-spent="store.data.todaySpent"
       />
       <div class="month-card">
-        <strong>{{ Number(store.data.monthRemaining).toFixed(2) }}</strong>
+        <Money class="m-amount" :amount="store.data.monthRemaining" colour />
         left this month over {{ store.data.daysLeft }} days
       </div>
       <CategoryBreakdown :categories="store.data.byCategory || []" />
@@ -82,8 +83,8 @@ onMounted(() => store.load())
   color: var(--c-text-muted);
   font-size: var(--text-sm);
 }
-.month-card strong {
-  color: var(--c-text);
+.month-card .m-amount {
+  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
 }
 .section-title {
