@@ -26,6 +26,13 @@ function maskIban(iban) {
   return iban.length > 8 ? iban.slice(0, 4) + 'XXXX' + iban.slice(-4) : iban
 }
 
+// ING uses "NOTPROVIDED" for an absent name; fall back to the type.
+function txnName(t) {
+  const name = t.counterparty
+  if (name && !/^not\s*provided$/i.test(name.trim())) return name
+  return t.transactionType || '—'
+}
+
 async function onTreatment(e) {
   saving.value = true
   try {
@@ -77,7 +84,10 @@ async function onTreatment(e) {
 
     <div v-if="expanded" class="txns">
       <div v-for="t in transactions" :key="t.id" class="txn">
-        <span class="date">{{ t.bookingDate }}</span>
+        <span class="tmeta">
+          <span class="tname">{{ txnName(t) }}</span>
+          <span class="date">{{ t.bookingDate }}</span>
+        </span>
         <Money :amount="t.amount" colour />
       </div>
     </div>
@@ -162,11 +172,23 @@ select.unset {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   padding: var(--space-1) 0;
   font-size: var(--text-sm);
+}
+.tmeta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .txn .date {
   color: var(--c-text-muted);
   font-variant-numeric: tabular-nums;
+  font-size: var(--text-xs);
 }
 </style>
