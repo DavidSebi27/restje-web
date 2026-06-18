@@ -55,7 +55,7 @@ async function onChanged() {
 <template>
   <main class="dashboard">
     <header class="topbar">
-      <span class="brand">Restje</span>
+      <span class="brand">Restje<span class="brand-jp">残り</span></span>
       <button class="logout" @click="auth.logout">Log out</button>
     </header>
 
@@ -67,12 +67,12 @@ async function onChanged() {
       />
       <div class="stats">
         <div class="stat">
-          <span class="stat-label">Income</span>
+          <span class="stat-label">Income <span class="jp">収入</span></span>
           <Money class="stat-val" :amount="budget.monthlyIncome ?? 0" />
           <span class="stat-sub">this month</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Left this month</span>
+          <span class="stat-label">Left <span class="jp">残り</span></span>
           <Money class="stat-val" :amount="store.data.monthRemaining" colour />
           <span class="stat-sub">over {{ store.data.daysLeft }} days</span>
         </div>
@@ -94,8 +94,8 @@ async function onChanged() {
     <p v-else-if="store.loading" class="state">Loading…</p>
 
     <section v-else-if="store.error === 'NEEDS_IMPORT'" class="state setup">
-      <p>Let’s set up your budget.</p>
-      <p class="muted">Import a bank export to get your first daily number.</p>
+      <p class="big">The cosmos is vast and indifferent.</p>
+      <p class="muted">Your budget needn’t be. Import a bank export to begin.</p>
       <RouterLink to="/import" class="cta">Import a CSV</RouterLink>
     </section>
 
@@ -117,7 +117,16 @@ async function onChanged() {
   padding: var(--space-4);
 }
 .brand {
+  font-family: var(--font-display);
   font-weight: 700;
+  font-size: var(--text-lg);
+  color: var(--c-text);
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.brand-jp {
+  font-size: var(--text-sm);
   color: var(--c-accent);
 }
 .logout {
@@ -179,7 +188,12 @@ async function onChanged() {
 }
 .state {
   text-align: center;
-  padding: var(--space-8) var(--space-4);
+  padding: var(--space-12) var(--space-4);
+}
+.state .big {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  margin: 0 0 var(--space-2);
 }
 .state .muted {
   color: var(--c-text-muted);

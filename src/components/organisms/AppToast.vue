@@ -18,8 +18,9 @@ const toast = useToastStore()
   transform: translateX(-50%);
   max-width: 90vw;
   padding: var(--space-3) var(--space-4);
-  background: var(--c-text);
-  color: #fff;
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
   border-radius: 999px;
   font-size: var(--text-sm);
   box-shadow: var(--shadow-md);

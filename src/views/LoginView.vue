@@ -44,6 +44,7 @@ async function onSubmit() {
   <main class="login">
     <div class="card">
       <h1 class="brand">Restje</h1>
+      <p class="brand-jp">残り — のこり</p>
       <p class="tagline">What you have left to spend today.</p>
 
       <form @submit.prevent="onSubmit">
@@ -96,14 +97,23 @@ async function onSubmit() {
 }
 .brand {
   text-align: center;
-  font-size: 2rem;
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
   margin: 0;
+  color: var(--c-text);
+}
+.brand-jp {
+  text-align: center;
+  font-size: var(--text-sm);
   color: var(--c-accent);
+  letter-spacing: 0.1em;
+  margin: var(--space-1) 0 0;
 }
 .tagline {
   text-align: center;
   color: var(--c-text-muted);
-  margin: var(--space-1) 0 var(--space-6);
+  margin: var(--space-2) 0 var(--space-8);
 }
 form {
   display: flex;

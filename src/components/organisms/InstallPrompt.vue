@@ -54,10 +54,11 @@ function dismiss() {
   justify-content: space-between;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: var(--c-text);
-  color: #fff;
+  background: var(--c-surface-2);
+  color: var(--c-text);
+  border: 1px solid var(--c-border);
   border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-md);
   z-index: 50;
 }
 .text {

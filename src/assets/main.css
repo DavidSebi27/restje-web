@@ -1,10 +1,35 @@
 @import './base.css';
 
+body {
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -8%, #1b1d2b 0%, transparent 62%),
+    var(--c-bg);
+  background-attachment: fixed;
+}
+
+/* A faint, indifferent scattering of stars. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 18% 28%, rgba(236, 231, 221, 0.28), transparent),
+    radial-gradient(1px 1px at 72% 62%, rgba(236, 231, 221, 0.18), transparent),
+    radial-gradient(1px 1px at 41% 82%, rgba(236, 231, 221, 0.14), transparent),
+    radial-gradient(1px 1px at 86% 19%, rgba(236, 231, 221, 0.2), transparent),
+    radial-gradient(1px 1px at 56% 12%, rgba(236, 231, 221, 0.12), transparent),
+    radial-gradient(1px 1px at 9% 66%, rgba(236, 231, 221, 0.16), transparent),
+    radial-gradient(1px 1px at 33% 48%, rgba(226, 50, 80, 0.22), transparent);
+}
+
 #app {
+  position: relative;
+  z-index: 1;
   max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--c-bg);
 }
 
 a {
@@ -12,12 +37,9 @@ a {
   text-decoration: none;
 }
 
-/* On larger screens, frame the app column so it reads as a phone-sized app. */
 @media (min-width: 520px) {
-  body {
-    background: #eef1ee;
-  }
   #app {
-    box-shadow: var(--shadow-md);
+    border-left: 1px solid var(--c-border);
+    border-right: 1px solid var(--c-border);
   }
 }

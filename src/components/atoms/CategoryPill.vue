@@ -16,16 +16,9 @@ defineProps({
   padding: 2px var(--space-2);
   border-radius: 999px;
   font-size: 0.75rem;
-  background: var(--c-surface);
+  background: var(--c-surface-2);
   color: var(--c-text-muted);
+  border: 1px solid var(--c-border);
   white-space: nowrap;
-}
-.pill.need {
-  background: #e8f1ec;
-  color: #2c6b4f;
-}
-.pill.want {
-  background: #f3ede6;
-  color: #8a5a2b;
 }
 </style>

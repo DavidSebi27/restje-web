@@ -50,7 +50,7 @@ async function onFile(file) {
 
 <template>
   <main class="import">
-    <h1>Import ING CSV</h1>
+    <h1>Import <span class="jp title-jp">取込</span></h1>
     <p class="lead">
       Export a month from the ING app or site, then drop the file here.
     </p>

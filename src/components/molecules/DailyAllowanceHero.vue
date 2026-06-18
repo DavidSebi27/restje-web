@@ -21,8 +21,9 @@ const amount = computed(
 
 <template>
   <section class="hero" :class="{ over: isOver }">
+    <p class="cap"><span class="jp">今日の残り</span> · what’s left today</p>
     <p class="amount">{{ amount }}</p>
-    <p class="status">{{ isOver ? 'Over budget today' : 'Safe to spend today' }}</p>
+    <p class="status">{{ isOver ? 'Over budget' : 'Safe to spend' }}</p>
     <p class="detail">
       {{ eur(Number(dailyAllowance)) }} allowance · {{ eur(Number(todaySpent)) }} spent
     </p>
@@ -35,29 +36,42 @@ const amount = computed(
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: var(--space-8) var(--space-4) var(--space-6);
-  --ring: var(--c-good);
+  padding: var(--space-12) var(--space-4) var(--space-8);
+  --ink: var(--c-good);
 }
 .hero.over {
-  --ring: var(--c-bad);
+  --ink: var(--c-bad);
+}
+.cap {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-xs);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+.cap .jp {
+  letter-spacing: 0.1em;
+  margin-right: var(--space-1);
+  color: var(--c-text);
 }
 .amount {
   margin: 0;
-  font-size: clamp(2.75rem, 14vw, 3.75rem);
-  font-weight: var(--weight-bold);
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: var(--text-hero);
+  font-weight: 700;
+  letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  color: var(--ring);
-  line-height: 1.1;
+  color: var(--ink);
+  line-height: 1.05;
 }
 .status {
-  margin: var(--space-2) 0 0;
+  margin: var(--space-3) 0 0;
   font-size: var(--text-base);
-  color: var(--c-text-muted);
+  color: var(--c-text);
 }
 .detail {
-  margin: var(--space-3) 0 0;
+  margin: var(--space-2) 0 0;
   font-size: var(--text-sm);
   color: var(--c-text-muted);
   font-variant-numeric: tabular-nums;

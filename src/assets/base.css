@@ -1,20 +1,21 @@
-/* Design tokens — Phase 8 visual pass. */
+/* Design tokens — "残り / Nokori": a dark, cosmic ledger.
+   Deep-space charcoal · warm off-white ink · Shadow crimson accent ·
+   matcha green only for "in the black". Japanese mincho for numbers. */
 :root {
   /* Palette */
-  --c-bg: #ffffff;
-  --c-surface: #f2f5f3; /* subtle fills: pills, bar tracks, legend */
-  --c-surface-raised: #ffffff;
-  --c-border: #e6e9e6;
-  --c-text: #14201b;
-  --c-text-muted: #6b7570;
+  --c-bg: #0c0d11; /* deep space */
+  --c-surface: #15171f; /* raised panel */
+  --c-surface-2: #1d2029; /* higher elevation (toasts, sheets) */
+  --c-border: #282c37;
+  --c-text: #ece7dd; /* warm off-white ink */
+  --c-text-muted: #8b8f9c;
 
-  --c-good: #1f9d55;
-  --c-good-soft: #e7f4ec;
-  --c-bad: #d64545;
-  --c-bad-soft: #fbeae9;
-  --c-accent: #1f9d55;
-  --c-need: #2c6b4f;
-  --c-want: #b9803f;
+  --c-good: #93b56a; /* matcha — money still in the black */
+  --c-good-soft: #1a2417;
+  --c-bad: #e23250; /* Shadow crimson — over budget / danger */
+  --c-bad-soft: #2a141a;
+  --c-accent: #e23250; /* crimson brand */
+  --c-on-accent: #fbf1f2; /* ink on crimson */
 
   /* Type scale */
   --text-xs: 0.75rem;
@@ -23,9 +24,9 @@
   --text-lg: 1.25rem;
   --text-xl: 1.5rem;
   --text-2xl: 2rem;
-  --text-hero: clamp(2.75rem, 16vw, 4rem);
+  --text-hero: clamp(2.75rem, 14vw, 3.75rem);
 
-  --weight-medium: 600;
+  --weight-medium: 500;
   --weight-bold: 700;
 
   /* Spacing scale */
@@ -41,11 +42,15 @@
   --radius-sm: 0.5rem;
 
   /* Elevation */
-  --shadow-sm: 0 1px 2px rgba(20, 32, 27, 0.06);
-  --shadow-md: 0 8px 28px rgba(20, 32, 27, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.5);
 
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-    Helvetica, Arial, sans-serif;
+  /* Type families. JetBrains Mono is the primary face — lowercase l and capital I
+     are unmistakable; Zen Kaku Gothic carries the kanji it can't render. */
+  --font: 'JetBrains Mono', 'Zen Kaku Gothic New', ui-monospace, SFMono-Regular,
+    Menlo, Consolas, monospace;
+  --font-display: 'JetBrains Mono', 'Zen Kaku Gothic New', monospace;
+  --font-jp: 'Zen Kaku Gothic New', sans-serif;
 }
 
 *,
@@ -84,4 +89,17 @@ select {
 
 button {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* A tiny kanji caption that sits beside Latin labels. */
+.jp {
+  font-family: var(--font-jp);
+  color: var(--c-text-muted);
+  font-weight: 400;
+}
+/* Kanji beside a heading: scaled down and tinted. */
+.title-jp {
+  font-size: 0.6em;
+  color: var(--c-accent);
+  margin-left: var(--space-1);
 }

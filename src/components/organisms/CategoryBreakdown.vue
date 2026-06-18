@@ -39,7 +39,7 @@ const totalLabel = computed(() =>
 <template>
   <section v-if="categories.length" class="breakdown">
     <div class="head">
-      <h2 class="section-title">Where it went</h2>
+      <h2 class="section-title">Where it went <span class="jp">内訳</span></h2>
       <span class="total">{{ totalLabel }} spent</span>
     </div>
 
@@ -80,10 +80,10 @@ const totalLabel = computed(() =>
 }
 .row-btn {
   display: block;
-  width: 100%;
   text-align: left;
   background: none;
   border: none;
+  color: var(--c-text); /* buttons reset to system text colour otherwise */
   padding: var(--space-2);
   margin: 0 calc(-1 * var(--space-2));
   width: calc(100% + 2 * var(--space-2));
@@ -91,7 +91,7 @@ const totalLabel = computed(() =>
   cursor: pointer;
 }
 .row-btn.active {
-  background: var(--c-surface);
+  background: var(--c-surface-2);
 }
 .row-btn :deep(.bar-row) {
   margin-bottom: 0;
