@@ -125,15 +125,17 @@ async function onRemoveRow(r) {
 
       <h3>Recurring expenses</h3>
       <div v-for="r in budget.recurring" :key="r.id" class="recurring-row">
-        <input v-model="r.name" placeholder="e.g. Rent" class="grow" />
-        <input v-model="r.amount" type="number" inputmode="decimal" class="amt" />
+        <input v-model="r.name" placeholder="e.g. Rent" />
+        <input v-model="r.amount" type="number" inputmode="decimal" />
         <button type="button" class="rsave" @click="onSaveRow(r)">Save</button>
-        <button type="button" class="remove" @click="onRemoveRow(r)">×</button>
+        <button type="button" class="remove" aria-label="Remove" @click="onRemoveRow(r)">
+          ×
+        </button>
       </div>
 
-      <div class="recurring-row">
-        <input v-model="newRow.name" placeholder="New bill…" class="grow" />
-        <input v-model="newRow.amount" type="number" inputmode="decimal" class="amt" />
+      <div class="recurring-row new">
+        <input v-model="newRow.name" placeholder="New bill…" />
+        <input v-model="newRow.amount" type="number" inputmode="decimal" />
         <button type="button" class="add" @click="onAddRow">Add</button>
       </div>
     </section>
@@ -254,33 +256,37 @@ input {
   color: var(--c-text);
 }
 .recurring-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 6rem auto 2.75rem;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
-  align-items: center;
+  align-items: stretch;
 }
-.recurring-row .grow {
-  flex: 1;
+.recurring-row input {
+  width: 100%;
   min-width: 0;
 }
-.recurring-row .amt {
-  width: 5.5rem;
+.recurring-row.new .add {
+  grid-column: 3 / 5; /* Add spans the Save + remove columns above it */
 }
 .rsave,
 .add {
   border: 1px solid var(--c-accent);
   border-radius: var(--radius-sm);
-  background: var(--c-bg);
+  background: transparent;
   color: var(--c-accent);
   cursor: pointer;
   padding: var(--space-2) var(--space-3);
+  white-space: nowrap;
 }
 .remove {
   border: 1px solid var(--c-border);
   border-radius: var(--radius-sm);
-  background: var(--c-bg);
+  background: transparent;
+  color: var(--c-text-muted);
   cursor: pointer;
-  padding: 0 var(--space-3);
+  font-size: 1.2rem;
+  line-height: 1;
 }
 .save {
   display: block;

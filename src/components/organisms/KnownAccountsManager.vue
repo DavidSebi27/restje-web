@@ -1,25 +1,105 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useKnownAccountsStore } from '@/stores/knownAccounts'
 import { useDashboardStore } from '@/stores/dashboard'
+import { useCategoriesStore } from '@/stores/categories'
+import { createKnownAccount } from '@/api/knownAccounts'
 import KnownAccountRow from '@/components/molecules/KnownAccountRow.vue'
 
 const accounts = useKnownAccountsStore()
 const dashboard = useDashboardStore()
+const categories = useCategoriesStore()
 
-onMounted(() => accounts.load())
+const blank = () => ({
+  label: '',
+  iban: '',
+  scope: 'OWN',
+  treatment: 'TRANSFER',
+  categoryId: '',
+})
+const form = ref(blank())
+const adding = ref(false)
+const addError = ref(null)
+
+// EXPENSE/INCOME accounts must carry a category (backend validates this).
+const needsCategory = computed(() =>
+  ['EXPENSE', 'INCOME'].includes(form.value.treatment),
+)
+
+onMounted(() => {
+  accounts.load()
+  categories.load()
+})
 
 // A treatment change must visibly move the daily number — that cause-and-effect
-// is what makes the setting feel real. Reflect the new list and reload the
-// dashboard.
+// is what makes the setting feel real.
 async function onChanged() {
   await accounts.load()
   await dashboard.load()
+}
+
+async function onAdd() {
+  if (!form.value.label.trim() || !form.value.iban.trim()) {
+    addError.value = 'Label and IBAN are both required.'
+    return
+  }
+  if (needsCategory.value && !form.value.categoryId) {
+    addError.value = 'Pick a category for income/expense accounts.'
+    return
+  }
+  adding.value = true
+  addError.value = null
+  try {
+    await createKnownAccount({
+      iban: form.value.iban.trim(),
+      label: form.value.label.trim(),
+      scope: form.value.scope,
+      treatment: form.value.treatment,
+      categoryId: needsCategory.value ? form.value.categoryId : null,
+    })
+    form.value = blank()
+    await onChanged()
+  } catch (e) {
+    addError.value =
+      e.response?.status === 409
+        ? 'That IBAN is already saved.'
+        : 'Couldn’t add that account.'
+  } finally {
+    adding.value = false
+  }
 }
 </script>
 
 <template>
   <div class="manager">
+    <section class="add">
+      <h2>Add an account</h2>
+      <div class="fields">
+        <input v-model="form.label" placeholder="Label (e.g. My savings)" />
+        <input v-model="form.iban" placeholder="IBAN" autocapitalize="characters" />
+        <select v-model="form.scope">
+          <option value="OWN">My account</option>
+          <option value="KNOWN_PARTY">Person / party</option>
+        </select>
+        <select v-model="form.treatment">
+          <option value="TRANSFER">transfer</option>
+          <option value="SAVING">saving</option>
+          <option value="INCOME">income</option>
+          <option value="EXPENSE">expense</option>
+        </select>
+        <select v-if="needsCategory" v-model="form.categoryId">
+          <option value="" disabled>Category…</option>
+          <option v-for="c in categories.items" :key="c.id" :value="c.id">
+            {{ c.name }}
+          </option>
+        </select>
+      </div>
+      <p v-if="addError" class="err">{{ addError }}</p>
+      <button type="button" class="add-btn" :disabled="adding" @click="onAdd">
+        {{ adding ? 'Adding…' : 'Add account' }}
+      </button>
+    </section>
+
     <section>
       <h2>My accounts</h2>
       <p class="hint">
@@ -90,6 +170,46 @@ h2 {
   color: var(--c-text-muted);
   font-size: 0.9rem;
 }
+
+.add {
+  padding: var(--space-4);
+  background: var(--c-surface);
+  border-radius: var(--radius);
+}
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.fields input,
+.fields select {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+  color: var(--c-text);
+}
+.add-btn {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+.add-btn:disabled {
+  opacity: 0.6;
+}
+.err {
+  color: var(--c-bad);
+  font-size: 0.85rem;
+  margin: var(--space-2) 0 0;
+}
+
 .legend {
   margin: var(--space-6) 0 0;
   padding: var(--space-4);

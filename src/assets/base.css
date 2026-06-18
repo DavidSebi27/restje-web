@@ -88,7 +88,18 @@ select {
 }
 
 button {
+  color: inherit; /* otherwise buttons fall back to system black on the dark UI */
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Drop the native number spinners — they clutter the money inputs. */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
 }
 
 /* A tiny kanji caption that sits beside Latin labels. */
