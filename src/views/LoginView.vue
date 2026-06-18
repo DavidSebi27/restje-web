@@ -44,7 +44,7 @@ async function onSubmit() {
   <main class="login">
     <div class="card">
       <h1 class="brand">Restje</h1>
-      <p class="brand-jp">残り — のこり</p>
+      <p class="brand-jp">残り</p>
       <p class="tagline">What you have left to spend today.</p>
 
       <form @submit.prevent="onSubmit">

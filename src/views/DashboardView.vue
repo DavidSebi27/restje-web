@@ -67,12 +67,12 @@ async function onChanged() {
       />
       <div class="stats">
         <div class="stat">
-          <span class="stat-label">Income <span class="jp">収入</span></span>
+          <span class="stat-label">Income</span>
           <Money class="stat-val" :amount="budget.monthlyIncome ?? 0" />
           <span class="stat-sub">this month</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Left <span class="jp">残り</span></span>
+          <span class="stat-label">Left this month</span>
           <Money class="stat-val" :amount="store.data.monthRemaining" colour />
           <span class="stat-sub">over {{ store.data.daysLeft }} days</span>
         </div>

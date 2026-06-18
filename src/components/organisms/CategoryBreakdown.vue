@@ -39,7 +39,7 @@ const totalLabel = computed(() =>
 <template>
   <section v-if="categories.length" class="breakdown">
     <div class="head">
-      <h2 class="section-title">Where it went <span class="jp">内訳</span></h2>
+      <h2 class="section-title">Where it went</h2>
       <span class="total">{{ totalLabel }} spent</span>
     </div>
 

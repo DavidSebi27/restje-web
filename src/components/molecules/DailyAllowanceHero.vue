@@ -21,9 +21,8 @@ const amount = computed(
 
 <template>
   <section class="hero" :class="{ over: isOver }">
-    <p class="cap"><span class="jp">今日の残り</span> · what’s left today</p>
     <p class="amount">{{ amount }}</p>
-    <p class="status">{{ isOver ? 'Over budget' : 'Safe to spend' }}</p>
+    <p class="status">{{ isOver ? 'Over budget today' : 'Safe to spend today' }}</p>
     <p class="detail">
       {{ eur(Number(dailyAllowance)) }} allowance · {{ eur(Number(todaySpent)) }} spent
     </p>
@@ -41,18 +40,6 @@ const amount = computed(
 }
 .hero.over {
   --ink: var(--c-bad);
-}
-.cap {
-  margin: 0 0 var(--space-3);
-  font-size: var(--text-xs);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--c-text-muted);
-}
-.cap .jp {
-  letter-spacing: 0.1em;
-  margin-right: var(--space-1);
-  color: var(--c-text);
 }
 .amount {
   margin: 0;

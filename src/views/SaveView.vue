@@ -57,11 +57,11 @@ const tipsTotal = computed(() => tips.value.reduce((s, t) => s + t.save, 0))
 
 <template>
   <main class="save">
-    <h1>Save <span class="jp title-jp">貯金</span></h1>
+    <h1>Save</h1>
 
     <section>
       <div class="head">
-        <h2 class="section-title">Upcoming <span class="jp">予定</span></h2>
+        <h2 class="section-title">Upcoming</h2>
         <Money v-if="upcoming.length" class="total" :amount="-upcomingTotal" colour />
       </div>
 
@@ -78,7 +78,7 @@ const tipsTotal = computed(() => tips.value.reduce((s, t) => s + t.save, 0))
     </section>
 
     <section>
-      <h2 class="section-title">Ways to save <span class="jp">節約</span></h2>
+      <h2 class="section-title">Ways to save</h2>
 
       <template v-if="tips.length">
         <p class="lead">

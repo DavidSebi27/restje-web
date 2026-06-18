@@ -108,9 +108,3 @@ input[type='number'] {
   color: var(--c-text-muted);
   font-weight: 400;
 }
-/* Kanji beside a heading: scaled down and tinted. */
-.title-jp {
-  font-size: 0.6em;
-  color: var(--c-accent);
-  margin-left: var(--space-1);
-}

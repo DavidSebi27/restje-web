@@ -51,8 +51,8 @@ const pct = computed(() => {
 .fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--c-accent), #b51e3a);
-  opacity: 0.85;
+  background: var(--c-accent);
+  opacity: 0.55;
 }
 .fill.need {
   background: var(--c-good);

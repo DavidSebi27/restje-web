@@ -105,7 +105,7 @@ async function onRemoveRow(r) {
 
 <template>
   <main class="settings">
-    <h1>Settings <span class="jp title-jp">設定</span></h1>
+    <h1>Settings</h1>
 
     <section class="budget">
       <h2>Budget</h2>
