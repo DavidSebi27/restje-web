@@ -14,21 +14,32 @@ const categories = useCategoriesStore()
 // Transactions grouped by counterparty IBAN, so each account can show its
 // payments/transfers and a net total. Loaded client-side (personal scale).
 const txnsByIban = ref({})
+
+// IBANs are stored normalised on known accounts but may keep CSV spacing/case on
+// transactions — match on a normalised key so nothing slips through.
+const normIban = (s) => (s || '').replace(/\s/g, '').toUpperCase()
+
 async function loadTxns() {
+  const map = {}
+  const size = 500
   try {
-    const { data } = await listTransactions({ size: 1000 })
-    const rows = data.content ?? data
-    const map = {}
-    for (const t of rows) {
-      if (!t.counterpartyIban) continue
-      ;(map[t.counterpartyIban] ||= []).push(t)
+    for (let page = 0; page < 40; page++) {
+      const { data } = await listTransactions({ page, size })
+      const rows = data.content ?? data
+      for (const t of rows) {
+        const key = normIban(t.counterpartyIban)
+        if (!key) continue
+        ;(map[key] ||= []).push(t)
+      }
+      const last = data.last ?? rows.length < size
+      if (last || !rows.length) break
     }
-    txnsByIban.value = map
   } catch {
-    txnsByIban.value = {}
+    // leave whatever we managed to group
   }
+  txnsByIban.value = map
 }
-const txnsFor = (iban) => txnsByIban.value[iban] || []
+const txnsFor = (iban) => txnsByIban.value[normIban(iban)] || []
 
 const blank = () => ({
   label: '',
