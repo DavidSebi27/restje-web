@@ -6,7 +6,9 @@ import CategoryBar from '@/components/molecules/CategoryBar.vue'
 const props = defineProps({
   // Dashboard byCategory: [{ categoryName, emoji, total }]
   categories: { type: Array, default: () => [] },
+  selectedKey: { type: String, default: null },
 })
+defineEmits(['select'])
 
 function amount(row) {
   return Math.abs(Number(row.total))
@@ -41,13 +43,16 @@ const totalLabel = computed(() =>
       <span class="total">{{ totalLabel }} spent</span>
     </div>
 
-    <CategoryBar
+    <button
       v-for="r in rows"
       :key="r.key"
-      :label="r.label"
-      :amount="r.value"
-      :total="total"
-    />
+      type="button"
+      class="row-btn"
+      :class="{ active: r.key === selectedKey }"
+      @click="$emit('select', r)"
+    >
+      <CategoryBar :label="r.label" :amount="r.value" :total="total" />
+    </button>
   </section>
 </template>
 
@@ -72,5 +77,26 @@ const totalLabel = computed(() =>
   font-size: var(--text-sm);
   color: var(--c-text-muted);
   font-variant-numeric: tabular-nums;
+}
+.row-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: var(--space-2);
+  margin: 0 calc(-1 * var(--space-2));
+  width: calc(100% + 2 * var(--space-2));
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.row-btn.active {
+  background: var(--c-surface);
+}
+.row-btn :deep(.bar-row) {
+  margin-bottom: 0;
+}
+.row-btn + .row-btn {
+  margin-top: var(--space-2);
 }
 </style>

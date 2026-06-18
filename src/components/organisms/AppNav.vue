@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 // Bottom tab bar.
 const tabs = [
   { to: '/', label: 'Today' },
-  { to: '/transactions', label: 'Activity' },
+  { to: '/save', label: 'Save' },
   { to: '/import', label: 'Import' },
   { to: '/settings', label: 'Settings' },
 ]

@@ -6,7 +6,7 @@ const routes = [
   { path: '/onboarding', component: () => import('@/views/OnboardingView.vue') },
   { path: '/', component: () => import('@/views/DashboardView.vue') },
   { path: '/import', component: () => import('@/views/ImportView.vue') },
-  { path: '/transactions', component: () => import('@/views/TransactionsView.vue') },
+  { path: '/save', component: () => import('@/views/SaveView.vue') },
   { path: '/settings', component: () => import('@/views/SettingsView.vue') },
 ]
 

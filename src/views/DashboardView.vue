@@ -1,7 +1,9 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
+import { useCategoriesStore } from '@/stores/categories'
+import { useTransactionsStore } from '@/stores/transactions'
 import Money from '@/components/atoms/Money.vue'
 import DailyAllowanceHero from '@/components/molecules/DailyAllowanceHero.vue'
 import CategoryBreakdown from '@/components/organisms/CategoryBreakdown.vue'
@@ -9,9 +11,42 @@ import TransactionList from '@/components/organisms/TransactionList.vue'
 
 const store = useDashboardStore()
 const auth = useAuthStore()
+const categories = useCategoriesStore()
+const txStore = useTransactionsStore()
+
+// The selected "Where it went" category filters the list below it.
+const selected = ref(null) // { key, label, id }
 
 // load() runs on every dashboard mount: open the app, see today's truth.
-onMounted(() => store.load())
+onMounted(() => {
+  store.load()
+  categories.load()
+})
+
+async function selectCategory(row) {
+  if (selected.value?.key === row.key) return clearCategory()
+  const cat = categories.items.find((c) => c.name === row.key)
+  selected.value = { key: row.key, label: row.label, id: cat?.id ?? null }
+  if (cat) await txStore.load({ category: cat.id, size: 200 })
+}
+
+function clearCategory() {
+  selected.value = null
+}
+
+const listTransactions = computed(() => {
+  if (!selected.value) return store.data?.recentTransactions || []
+  if (selected.value.id) return txStore.items
+  // Fallback if the category id couldn't be resolved: filter the recent rows.
+  return (store.data?.recentTransactions || []).filter(
+    (t) => t.categoryName === selected.value.key,
+  )
+})
+
+async function onChanged() {
+  await store.load() // a reclassify can move the daily number
+  if (selected.value?.id) await txStore.load({ category: selected.value.id, size: 200 })
+}
 </script>
 
 <template>
@@ -31,12 +66,18 @@ onMounted(() => store.load())
         <Money class="m-amount" :amount="store.data.monthRemaining" colour />
         left this month over {{ store.data.daysLeft }} days
       </div>
-      <CategoryBreakdown :categories="store.data.byCategory || []" />
-      <h2 class="section-title">Recent</h2>
-      <TransactionList
-        :transactions="store.data.recentTransactions || []"
-        @changed="store.load()"
+      <CategoryBreakdown
+        :categories="store.data.byCategory || []"
+        :selected-key="selected?.key || null"
+        @select="selectCategory"
       />
+      <div class="recent-head">
+        <h2 class="section-title">{{ selected ? selected.label : 'Recent' }}</h2>
+        <button v-if="selected" class="clear" @click="clearCategory">
+          Clear ✕
+        </button>
+      </div>
+      <TransactionList :transactions="listTransactions" @changed="onChanged" />
     </template>
 
     <p v-else-if="store.loading" class="state">Loading…</p>
@@ -87,13 +128,26 @@ onMounted(() => store.load())
   font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
 }
+.recent-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-2);
+}
 .section-title {
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--c-text-muted);
-  padding: 0 var(--space-4);
-  margin: 0 0 var(--space-2);
+  margin: 0;
+}
+.clear {
+  background: none;
+  border: none;
+  color: var(--c-accent);
+  cursor: pointer;
+  font-size: var(--text-sm);
 }
 .state {
   text-align: center;
