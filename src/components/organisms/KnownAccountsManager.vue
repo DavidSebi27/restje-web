@@ -4,42 +4,11 @@ import { useKnownAccountsStore } from '@/stores/knownAccounts'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useCategoriesStore } from '@/stores/categories'
 import { createKnownAccount } from '@/api/knownAccounts'
-import { listTransactions } from '@/api/transactions'
 import KnownAccountRow from '@/components/molecules/KnownAccountRow.vue'
 
 const accounts = useKnownAccountsStore()
 const dashboard = useDashboardStore()
 const categories = useCategoriesStore()
-
-// Transactions grouped by counterparty IBAN, so each account can show its
-// payments/transfers and a net total. Loaded client-side (personal scale).
-const txnsByIban = ref({})
-
-// IBANs are stored normalised on known accounts but may keep CSV spacing/case on
-// transactions — match on a normalised key so nothing slips through.
-const normIban = (s) => (s || '').replace(/\s/g, '').toUpperCase()
-
-async function loadTxns() {
-  const map = {}
-  const size = 500
-  try {
-    for (let page = 0; page < 40; page++) {
-      const { data } = await listTransactions({ page, size })
-      const rows = data.content ?? data
-      for (const t of rows) {
-        const key = normIban(t.counterpartyIban)
-        if (!key) continue
-        ;(map[key] ||= []).push(t)
-      }
-      const last = data.last ?? rows.length < size
-      if (last || !rows.length) break
-    }
-  } catch {
-    // leave whatever we managed to group
-  }
-  txnsByIban.value = map
-}
-const txnsFor = (iban) => txnsByIban.value[normIban(iban)] || []
 
 const blank = () => ({
   label: '',
@@ -60,7 +29,6 @@ const needsCategory = computed(() =>
 onMounted(() => {
   accounts.load()
   categories.load()
-  loadTxns()
 })
 
 // A treatment change must visibly move the daily number — that cause-and-effect
@@ -141,7 +109,6 @@ async function onAdd() {
         v-for="a in accounts.own"
         :key="a.id"
         :account="a"
-        :transactions="txnsFor(a.iban)"
         @changed="onChanged"
       />
       <p v-if="!accounts.own.length" class="empty">None yet.</p>
@@ -154,7 +121,6 @@ async function onAdd() {
         v-for="a in accounts.parties"
         :key="a.id"
         :account="a"
-        :transactions="txnsFor(a.iban)"
         @changed="onChanged"
       />
       <p v-if="!accounts.parties.length" class="empty">None yet.</p>
@@ -170,7 +136,6 @@ async function onAdd() {
         v-for="a in accounts.unclassified"
         :key="a.id"
         :account="a"
-        :transactions="txnsFor(a.iban)"
         @changed="onChanged"
       />
     </section>

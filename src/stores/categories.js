@@ -13,5 +13,11 @@ export const useCategoriesStore = defineStore('categories', () => {
     loaded.value = true
   }
 
-  return { items, loaded, load }
+  // Force a refetch (e.g. after changing a classification).
+  async function reload() {
+    loaded.value = false
+    return load()
+  }
+
+  return { items, loaded, load, reload }
 })

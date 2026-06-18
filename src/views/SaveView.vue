@@ -1,14 +1,13 @@
 <script setup>
-import { onMounted, computed } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useCategoriesStore } from '@/stores/categories'
-import { useCategoryClassStore } from '@/stores/categoryClass'
+import { setCategoryClassification } from '@/api/categories'
 import { categoryGlyph } from '@/utils/categoryEmoji'
 import Money from '@/components/atoms/Money.vue'
 
 const dashboard = useDashboardStore()
 const categories = useCategoriesStore()
-const cls = useCategoryClassStore()
 
 onMounted(() => {
   if (!dashboard.data) dashboard.load()
@@ -18,16 +17,34 @@ onMounted(() => {
 const eur = (n) =>
   new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(n)
 
-// Default a category's class from its backend kind; the user can override.
-const kindByName = computed(() => {
+// Classification is a per-user category field on the backend (NECESSITY/LUXURY),
+// defaulting from the category kind. Overrides hold optimistic UI changes.
+const overrides = ref({})
+const catByName = computed(() => {
   const m = {}
-  for (const c of categories.items) m[c.name] = c.kind
+  for (const c of categories.items) m[c.name] = c
   return m
 })
-const defaultClass = (name) =>
-  kindByName.value[name] === 'WANT' ? 'luxury' : 'necessity'
-const classOf = (name) => cls.classOf(name, defaultClass(name))
-const toggle = (name) => cls.toggle(name, defaultClass(name))
+
+function classOf(name) {
+  if (overrides.value[name]) return overrides.value[name]
+  const c = catByName.value[name]
+  if (c?.classification) return String(c.classification).toLowerCase()
+  return c?.kind === 'WANT' ? 'luxury' : 'necessity'
+}
+
+async function toggle(name) {
+  const next = classOf(name) === 'luxury' ? 'necessity' : 'luxury'
+  overrides.value[name] = next
+  const c = catByName.value[name]
+  if (c?.id) {
+    try {
+      await setCategoryClassification(c.id, next.toUpperCase())
+    } catch {
+      // backend may not have the endpoint yet; keep the optimistic value
+    }
+  }
+}
 
 const rows = computed(() =>
   (dashboard.data?.byCategory || [])

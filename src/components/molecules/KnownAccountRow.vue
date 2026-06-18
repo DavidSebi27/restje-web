@@ -1,36 +1,49 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { updateKnownAccount } from '@/api/knownAccounts'
+import { listTransactions } from '@/api/transactions'
 import Money from '@/components/atoms/Money.vue'
 
-const props = defineProps({
-  account: { type: Object, required: true },
-  transactions: { type: Array, default: () => [] },
-})
+const props = defineProps({ account: { type: Object, required: true } })
 const emit = defineEmits(['changed'])
 
 const TREATMENTS = ['TRANSFER', 'SAVING', 'INCOME', 'EXPENSE']
 const saving = ref(false)
-const expanded = ref(false)
 
-// Auto-created parties arrive without a real treatment, awaiting triage.
+const expanded = ref(false)
+const txns = ref([])
+const loadedTxns = ref(false)
+const loadingTxns = ref(false)
+
 const isUnset = computed(
   () => !props.account.treatment || props.account.treatment === 'UNCLASSIFIED',
 )
-const hasTxns = computed(() => props.transactions.length > 0)
-const total = computed(() =>
-  props.transactions.reduce((s, t) => s + Number(t.amount), 0),
-)
+// Totals come from the backend now; only show/expand when it provides them.
+const count = computed(() => props.account.count ?? null)
+const hasTotal = computed(() => count.value != null)
 
 function maskIban(iban) {
   return iban.length > 8 ? iban.slice(0, 4) + 'XXXX' + iban.slice(-4) : iban
 }
 
-// ING uses "NOTPROVIDED" for an absent name; fall back to the type.
 function txnName(t) {
   const name = t.counterparty
   if (name && !/^not\s*provided$/i.test(name.trim())) return name
   return t.transactionType || '—'
+}
+
+async function toggleExpand() {
+  expanded.value = !expanded.value
+  if (expanded.value && !loadedTxns.value) {
+    loadingTxns.value = true
+    try {
+      const { data } = await listTransactions({ iban: props.account.iban, size: 200 })
+      txns.value = data.content ?? data
+      loadedTxns.value = true
+    } finally {
+      loadingTxns.value = false
+    }
+  }
 }
 
 async function onTreatment(e) {
@@ -56,18 +69,18 @@ async function onTreatment(e) {
       <button
         type="button"
         class="summary"
-        :disabled="!hasTxns"
-        @click="expanded = !expanded"
+        :disabled="!hasTotal"
+        @click="toggleExpand"
       >
-        <span class="chev" :class="{ open: expanded, hidden: !hasTxns }">▸</span>
+        <span class="chev" :class="{ open: expanded, hidden: !hasTotal }">▸</span>
         <span class="meta">
           <span class="label">{{ account.label }}</span>
           <span class="iban">
             {{ maskIban(account.iban) }}
-            <template v-if="hasTxns"> · {{ transactions.length }}</template>
+            <template v-if="hasTotal"> · {{ count }}</template>
           </span>
         </span>
-        <Money v-if="hasTxns" class="total" :amount="total" colour />
+        <Money v-if="hasTotal" class="total" :amount="account.total" colour />
       </button>
       <select
         :value="isUnset ? '' : account.treatment"
@@ -83,7 +96,8 @@ async function onTreatment(e) {
     </div>
 
     <div v-if="expanded" class="txns">
-      <div v-for="t in transactions" :key="t.id" class="txn">
+      <p v-if="loadingTxns" class="loading">Loading…</p>
+      <div v-for="t in txns" :key="t.id" class="txn">
         <span class="tmeta">
           <span class="tname">{{ txnName(t) }}</span>
           <span class="date">{{ t.bookingDate }}</span>
@@ -167,6 +181,10 @@ select.unset {
 }
 .txns {
   padding: 0 0 var(--space-3) calc(1em + var(--space-2));
+}
+.loading {
+  color: var(--c-text-muted);
+  font-size: var(--text-sm);
 }
 .txn {
   display: flex;

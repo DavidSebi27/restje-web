@@ -68,7 +68,10 @@ async function onChanged() {
       <div class="stats">
         <div class="stat">
           <span class="stat-label">Income</span>
-          <Money class="stat-val" :amount="budget.monthlyIncome ?? 0" />
+          <Money
+            class="stat-val"
+            :amount="store.data.monthIncome ?? budget.monthlyIncome ?? 0"
+          />
           <span class="stat-sub">this month</span>
         </div>
         <div class="stat">

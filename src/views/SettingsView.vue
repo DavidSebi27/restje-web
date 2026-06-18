@@ -3,14 +3,12 @@ import { onMounted, ref } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
-import { useAliasStore } from '@/stores/aliases'
 import { resetAccountData, deleteAccount } from '@/api/account'
 import KnownAccountsManager from '@/components/organisms/KnownAccountsManager.vue'
 
 const budget = useBudgetStore()
 const dashboard = useDashboardStore()
 const auth = useAuthStore()
-const alias = useAliasStore()
 const saving = ref(false)
 const saved = ref(false)
 const newRow = ref({ name: '', amount: '', day: '' })
@@ -74,6 +72,7 @@ async function onSave() {
 function rowPayload(r) {
   return {
     name: r.name,
+    alias: r.alias ?? null,
     amount: r.amount,
     dayOfMonth: r.dayOfMonth || 1,
     categoryId: r.categoryId ?? null,
@@ -129,11 +128,7 @@ async function onRemoveRow(r) {
       <p class="cols">alias · amount · day of month it’s due</p>
       <div v-for="r in budget.recurring" :key="r.id" class="recurring-row">
         <div class="bill">
-          <input
-            :value="alias.map[r.id] || ''"
-            placeholder="Alias, e.g. Home insurance"
-            @input="alias.set(r.id, $event.target.value)"
-          />
+          <input v-model="r.alias" placeholder="Alias, e.g. Home insurance" />
           <span class="orig" :title="r.name">{{ r.name }}</span>
         </div>
         <input v-model="r.amount" type="number" inputmode="decimal" placeholder="€" />

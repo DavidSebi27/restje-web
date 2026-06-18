@@ -1,11 +1,9 @@
 <script setup>
 import { onMounted, computed } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
-import { useAliasStore } from '@/stores/aliases'
 import Money from '@/components/atoms/Money.vue'
 
 const budget = useBudgetStore()
-const alias = useAliasStore()
 
 onMounted(() => budget.load())
 
@@ -17,21 +15,21 @@ function ordinal(n) {
   return n + (s[(v - 20) % 10] || s[v] || s[0])
 }
 
-// Recurring bills whose day-of-month is today or later this month.
+const nameOf = (r) => r.alias || r.name
+
+// Paid status comes from the backend (does a matching transaction exist this
+// month). Fall back to the day-of-month guess until the backend provides it.
+const isPaid = (r) => r.paidThisMonth ?? (r.dayOfMonth ?? 1) < today
+const byDay = (a, b) => (a.dayOfMonth ?? 1) - (b.dayOfMonth ?? 1)
+
 const upcoming = computed(() =>
-  [...budget.recurring]
-    .filter((r) => (r.dayOfMonth ?? 1) >= today)
-    .sort((a, b) => (a.dayOfMonth ?? 1) - (b.dayOfMonth ?? 1)),
+  [...budget.recurring].filter((r) => !isPaid(r)).sort(byDay),
 )
 const upcomingTotal = computed(() =>
   upcoming.value.reduce((s, r) => s + Math.abs(Number(r.amount)), 0),
 )
-
-// Already paid (or due earlier in the month) — shown muted for context.
 const paid = computed(() =>
-  [...budget.recurring]
-    .filter((r) => (r.dayOfMonth ?? 1) < today)
-    .sort((a, b) => (a.dayOfMonth ?? 1) - (b.dayOfMonth ?? 1)),
+  [...budget.recurring].filter((r) => isPaid(r)).sort(byDay),
 )
 </script>
 
@@ -46,7 +44,7 @@ const paid = computed(() =>
     <div v-if="upcoming.length" class="list">
       <div v-for="r in upcoming" :key="r.id || r.name" class="row">
         <div class="meta">
-          <span class="name">{{ alias.label(r.id, r.name) }}</span>
+          <span class="name">{{ nameOf(r) }}</span>
           <span class="when">due {{ ordinal(r.dayOfMonth || 1) }}</span>
         </div>
         <Money :amount="-Math.abs(Number(r.amount))" colour />
@@ -59,7 +57,7 @@ const paid = computed(() =>
       <div class="list muted">
         <div v-for="r in paid" :key="r.id || r.name" class="row">
           <div class="meta">
-            <span class="name">{{ alias.label(r.id, r.name) }}</span>
+            <span class="name">{{ nameOf(r) }}</span>
             <span class="when">{{ ordinal(r.dayOfMonth || 1) }}</span>
           </div>
           <Money :amount="-Math.abs(Number(r.amount))" />
