@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { updateKnownAccount } from '@/api/knownAccounts'
 
 const props = defineProps({ account: { type: Object, required: true } })
@@ -7,6 +7,11 @@ const emit = defineEmits(['changed'])
 
 const TREATMENTS = ['TRANSFER', 'SAVING', 'INCOME', 'EXPENSE']
 const saving = ref(false)
+
+// Auto-created parties arrive without a real treatment, awaiting triage.
+const isUnset = computed(
+  () => !props.account.treatment || props.account.treatment === 'UNCLASSIFIED',
+)
 
 function maskIban(iban) {
   return iban.length > 8 ? iban.slice(0, 4) + 'XXXX' + iban.slice(-4) : iban
@@ -37,10 +42,12 @@ async function onTreatment(e) {
       <span class="iban">{{ maskIban(account.iban) }}</span>
     </div>
     <select
-      :value="account.treatment || 'TRANSFER'"
+      :value="isUnset ? '' : account.treatment"
+      :class="{ unset: isUnset }"
       :disabled="saving"
       @change="onTreatment"
     >
+      <option v-if="isUnset" value="" disabled>choose…</option>
       <option v-for="t in TREATMENTS" :key="t" :value="t">
         {{ t.toLowerCase() }}
       </option>
@@ -75,5 +82,10 @@ select {
   border: 1px solid var(--c-border);
   border-radius: var(--radius-sm);
   background: var(--c-bg);
+  color: var(--c-text);
+}
+select.unset {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
 }
 </style>

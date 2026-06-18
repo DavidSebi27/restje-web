@@ -17,12 +17,15 @@ export const useKnownAccountsStore = defineStore('knownAccounts', () => {
 
   const own = computed(() => accounts.value.filter((a) => a.scope === 'OWN'))
 
-  // Classified parties have a treatment; the rest land in the triage bucket.
+  // A party is "unclassified" until it has a real treatment — either null or an
+  // explicit UNCLASSIFIED value (auto-created from an import, awaiting triage).
+  const isUnset = (a) => !a.treatment || a.treatment === 'UNCLASSIFIED'
+
   const parties = computed(() =>
-    accounts.value.filter((a) => a.scope === 'KNOWN_PARTY' && a.treatment),
+    accounts.value.filter((a) => a.scope === 'KNOWN_PARTY' && !isUnset(a)),
   )
   const unclassified = computed(() =>
-    accounts.value.filter((a) => a.scope === 'KNOWN_PARTY' && !a.treatment),
+    accounts.value.filter((a) => a.scope === 'KNOWN_PARTY' && isUnset(a)),
   )
 
   return { accounts, loading, own, parties, unclassified, load }
