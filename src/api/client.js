@@ -16,11 +16,13 @@ client.interceptors.request.use((config) => {
 
 // A 401 on an authenticated request means the token expired -> drop the session
 // and bounce to login with a clear message. A 401 without a token is just a
-// failed login attempt; let the caller (LoginView) handle that.
+// failed login attempt; let the caller (LoginView) handle that. Requests that
+// pass `skipAuthLogout` (optional/self-handled calls, e.g. an endpoint that may
+// not exist yet) opt out of the auto-logout.
 client.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    if (err.response?.status === 401 && !err.config?.skipAuthLogout) {
       const auth = useAuthStore()
       if (auth.token) {
         useToastStore().show('Your session expired — please log in again.')
