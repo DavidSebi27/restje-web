@@ -4,11 +4,31 @@ import { useKnownAccountsStore } from '@/stores/knownAccounts'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useCategoriesStore } from '@/stores/categories'
 import { createKnownAccount } from '@/api/knownAccounts'
+import { listTransactions } from '@/api/transactions'
 import KnownAccountRow from '@/components/molecules/KnownAccountRow.vue'
 
 const accounts = useKnownAccountsStore()
 const dashboard = useDashboardStore()
 const categories = useCategoriesStore()
+
+// Transactions grouped by counterparty IBAN, so each account can show its
+// payments/transfers and a net total. Loaded client-side (personal scale).
+const txnsByIban = ref({})
+async function loadTxns() {
+  try {
+    const { data } = await listTransactions({ size: 1000 })
+    const rows = data.content ?? data
+    const map = {}
+    for (const t of rows) {
+      if (!t.counterpartyIban) continue
+      ;(map[t.counterpartyIban] ||= []).push(t)
+    }
+    txnsByIban.value = map
+  } catch {
+    txnsByIban.value = {}
+  }
+}
+const txnsFor = (iban) => txnsByIban.value[iban] || []
 
 const blank = () => ({
   label: '',
@@ -29,6 +49,7 @@ const needsCategory = computed(() =>
 onMounted(() => {
   accounts.load()
   categories.load()
+  loadTxns()
 })
 
 // A treatment change must visibly move the daily number — that cause-and-effect
@@ -109,6 +130,7 @@ async function onAdd() {
         v-for="a in accounts.own"
         :key="a.id"
         :account="a"
+        :transactions="txnsFor(a.iban)"
         @changed="onChanged"
       />
       <p v-if="!accounts.own.length" class="empty">None yet.</p>
@@ -121,6 +143,7 @@ async function onAdd() {
         v-for="a in accounts.parties"
         :key="a.id"
         :account="a"
+        :transactions="txnsFor(a.iban)"
         @changed="onChanged"
       />
       <p v-if="!accounts.parties.length" class="empty">None yet.</p>
@@ -136,6 +159,7 @@ async function onAdd() {
         v-for="a in accounts.unclassified"
         :key="a.id"
         :account="a"
+        :transactions="txnsFor(a.iban)"
         @changed="onChanged"
       />
     </section>
