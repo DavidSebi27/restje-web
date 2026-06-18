@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useCategoriesStore } from '@/stores/categories'
+import { categoryGlyph } from '@/utils/categoryEmoji'
 import CategoryBar from '@/components/molecules/CategoryBar.vue'
 import Money from '@/components/atoms/Money.vue'
 
@@ -26,12 +27,15 @@ function amount(row) {
 
 const rows = computed(() =>
   [...props.categories]
-    .map((r) => ({
-      key: r.categoryName,
-      label: r.emoji ? `${r.emoji} ${r.categoryName}` : r.categoryName,
-      value: amount(r),
-      kind: kindByName.value[r.categoryName] || null,
-    }))
+    .map((r) => {
+      const glyph = categoryGlyph(r.emoji)
+      return {
+        key: r.categoryName,
+        label: glyph ? `${glyph} ${r.categoryName}` : r.categoryName,
+        value: amount(r),
+        kind: kindByName.value[r.categoryName] || null,
+      }
+    })
     .sort((a, b) => b.value - a.value),
 )
 

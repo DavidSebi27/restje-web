@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { categoryGlyph } from '@/utils/categoryEmoji'
 import Money from '@/components/atoms/Money.vue'
 import CategoryPill from '@/components/atoms/CategoryPill.vue'
 
@@ -28,7 +29,8 @@ const categoryType = computed(
 const categoryLabel = computed(() => {
   const t = props.transaction
   const name = t.categoryName || 'Uncategorised'
-  return t.categoryEmoji ? `${t.categoryEmoji} ${name}` : name
+  const glyph = categoryGlyph(t.categoryEmoji)
+  return glyph ? `${glyph} ${name}` : name
 })
 
 function choose(e) {
