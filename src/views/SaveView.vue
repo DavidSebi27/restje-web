@@ -1,84 +1,55 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useCategoriesStore } from '@/stores/categories'
-import { getCategoryTrends } from '@/api/insights'
+import { useCategoryClassStore } from '@/stores/categoryClass'
 import { categoryGlyph } from '@/utils/categoryEmoji'
 import Money from '@/components/atoms/Money.vue'
 
 const dashboard = useDashboardStore()
 const categories = useCategoriesStore()
-const trends = ref([])
+const cls = useCategoryClassStore()
+
+onMounted(() => {
+  if (!dashboard.data) dashboard.load()
+  categories.load()
+})
 
 const eur = (n) =>
   new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(n)
 
-onMounted(async () => {
-  if (!dashboard.data) dashboard.load()
-  categories.load()
-  try {
-    trends.value = (await getCategoryTrends()).data
-  } catch {
-    trends.value = [] // endpoint not live yet -> fall back to the simple heuristic
-  }
-})
-
-// Preferred: discretionary categories where you're spending above your own
-// usual. The overspend is the concrete "what you could not spend".
-const trendTips = computed(() =>
-  trends.value
-    .filter((t) => t.kind === 'WANT')
-    .map((t) => {
-      const spent = Math.abs(Number(t.thisMonth))
-      const avg = Math.abs(Number(t.monthlyAverage))
-      return { name: t.categoryName, glyph: categoryGlyph(t.emoji), spent, avg }
-    })
-    .filter((t) => t.avg > 0 && t.spent - t.avg >= 1)
-    .sort((a, b) => b.spent - b.avg - (a.spent - a.avg))
-    .slice(0, 3)
-    .map((t) => ({
-      key: t.name,
-      glyph: t.glyph,
-      name: t.name,
-      spent: t.spent,
-      save: t.spent - t.avg,
-      note: `${Math.round(((t.spent - t.avg) / t.avg) * 100)}% above your usual ${eur(t.avg)}`,
-    })),
-)
-
-// Fallback (no history yet): biggest discretionary spends, trim a quarter.
+// Default a category's class from its backend kind; the user can override.
 const kindByName = computed(() => {
   const m = {}
   for (const c of categories.items) m[c.name] = c.kind
   return m
 })
-const fallbackTips = computed(() =>
+const defaultClass = (name) =>
+  kindByName.value[name] === 'WANT' ? 'luxury' : 'necessity'
+const classOf = (name) => cls.classOf(name, defaultClass(name))
+const toggle = (name) => cls.toggle(name, defaultClass(name))
+
+const rows = computed(() =>
   (dashboard.data?.byCategory || [])
     .map((c) => ({
       name: c.categoryName,
       glyph: categoryGlyph(c.emoji),
       spent: Math.abs(Number(c.total)),
     }))
-    .filter((c) => kindByName.value[c.name] === 'WANT' && c.spent > 0)
-    .sort((a, b) => b.spent - a.spent)
-    .slice(0, 3)
-    .map((c) => ({
-      key: c.name,
-      glyph: c.glyph,
-      name: c.name,
-      spent: c.spent,
-      save: c.spent * 0.25,
-      note: 'about a quarter of it',
-    })),
+    .filter((c) => c.spent > 0)
+    .sort((a, b) => b.spent - a.spent),
 )
 
-const dataDriven = computed(() => trendTips.value.length > 0)
-const tips = computed(() =>
-  dataDriven.value ? trendTips.value : fallbackTips.value,
-)
-const tipsTotal = computed(() => tips.value.reduce((s, t) => s + t.save, 0))
+const luxuries = computed(() => rows.value.filter((r) => classOf(r.name) === 'luxury'))
+const savings = computed(() => luxuries.value.reduce((s, r) => s + r.spent, 0))
+const luxuryNames = computed(() => {
+  const names = luxuries.value.map((r) => r.name)
+  if (names.length <= 1) return names.join('')
+  if (names.length === 2) return names.join(' and ')
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+})
 
-// Pace for the rest of the month — purely from the dashboard figures.
+// Pace for the rest of the month — straight from the dashboard figures.
 const monthRemaining = computed(() => Number(dashboard.data?.monthRemaining ?? 0))
 const daysLeft = computed(() => Number(dashboard.data?.daysLeft ?? 0))
 const paceOver = computed(() => monthRemaining.value < 0)
@@ -103,39 +74,37 @@ const perDay = computed(() =>
     </div>
 
     <h2 class="section-title">Ways to save</h2>
+    <p class="lead">Tap a tag to mark each spend as a necessity or a luxury.</p>
 
-    <template v-if="tips.length">
-      <p class="lead">
-        <template v-if="dataDriven">
-          You’re running above your usual in a few places. Back to normal keeps
-          about <strong><Money :amount="tipsTotal" /></strong> this month.
+    <template v-if="rows.length">
+      <div class="summary" :class="{ empty: !luxuries.length }">
+        <template v-if="luxuries.length">
+          Easing off <strong>{{ luxuryNames }}</strong> could free up
+          <strong class="amt"><Money :amount="savings" /></strong> this month.
         </template>
         <template v-else>
-          Trim your biggest optional spends and you’d keep about
-          <strong><Money :amount="tipsTotal" /></strong> this month.
+          Tag some spends as luxuries to see what you could free up.
         </template>
-      </p>
+      </div>
 
-      <div class="list">
-        <div v-for="t in tips" :key="t.key" class="tip">
-          <span class="tip-cat">{{ t.glyph }} {{ t.name }}</span>
-          <span class="tip-body">
-            <Money :amount="t.spent" /> this month —
-            <template v-if="dataDriven">
-              {{ t.note }}. Back to usual keeps
-              <strong><Money :amount="t.save" /></strong>.
-            </template>
-            <template v-else>
-              skip {{ t.note }} to keep
-              <strong><Money :amount="t.save" /></strong>.
-            </template>
-          </span>
+      <div class="cats">
+        <div v-for="r in rows" :key="r.name" class="cat">
+          <span class="cat-name">{{ r.glyph }} {{ r.name }}</span>
+          <Money class="cat-amt" :amount="r.spent" />
+          <button
+            type="button"
+            class="tag"
+            :class="classOf(r.name)"
+            @click="toggle(r.name)"
+          >
+            {{ classOf(r.name) }}
+          </button>
         </div>
       </div>
     </template>
 
-    <p v-else class="empty">
-      Import some transactions and your top optional spends will show up here.
+    <p v-else class="empty-state">
+      Import some transactions and your spending shows up here to triage.
     </p>
   </main>
 </template>
@@ -173,35 +142,63 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--c-text-muted);
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-2);
 }
 .lead {
   color: var(--c-text-muted);
+  font-size: var(--text-sm);
   margin: 0 0 var(--space-4);
 }
-.lead strong {
-  color: var(--c-good);
-}
-.tip {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
+.summary {
+  padding: var(--space-4);
   background: var(--c-surface);
   border-radius: var(--radius);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-4);
+  line-height: 1.5;
 }
-.tip-cat {
-  font-weight: 600;
+.summary strong {
+  color: var(--c-text);
 }
-.tip-body {
-  font-size: var(--text-sm);
-  color: var(--c-text-muted);
-}
-.tip-body strong {
+.summary .amt {
   color: var(--c-good);
 }
-.empty {
+.summary.empty {
+  color: var(--c-text-muted);
+  font-size: var(--text-sm);
+}
+.cat {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--c-border);
+}
+.cat-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cat-amt {
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-muted);
+}
+.tag {
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  padding: 2px var(--space-3);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  text-transform: lowercase;
+  background: transparent;
+  color: var(--c-text-muted);
+  min-width: 5.5rem;
+}
+.tag.luxury {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+.empty-state {
   color: var(--c-text-muted);
 }
 </style>
