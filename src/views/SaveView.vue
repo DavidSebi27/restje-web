@@ -58,10 +58,20 @@ const rows = computed(() =>
     .sort((a, b) => b.spent - a.spent),
 )
 
-const luxuries = computed(() => rows.value.filter((r) => classOf(r.name) === 'luxury'))
-const savings = computed(() => luxuries.value.reduce((s, r) => s + r.spent, 0))
+// Each category row reports how much of it counts as luxury (refined by any
+// per-payment overrides once expanded). The header totals those up.
+const contributions = ref({})
+function onContribution(name, value) {
+  contributions.value = { ...contributions.value, [name]: value }
+}
+const contributing = computed(() =>
+  rows.value.filter((r) => (contributions.value[r.name] || 0) > 0.005),
+)
+const savings = computed(() =>
+  rows.value.reduce((s, r) => s + (contributions.value[r.name] || 0), 0),
+)
 const luxuryNames = computed(() => {
-  const names = luxuries.value.map((r) => r.name)
+  const names = contributing.value.map((r) => r.name)
   if (names.length <= 1) return names.join('')
   if (names.length === 2) return names.join(' and ')
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
@@ -95,8 +105,8 @@ const perDay = computed(() =>
     <p class="lead">Tap a tag to mark each spend as a necessity or a luxury.</p>
 
     <template v-if="rows.length">
-      <div class="summary" :class="{ empty: !luxuries.length }">
-        <template v-if="luxuries.length">
+      <div class="summary" :class="{ empty: !contributing.length }">
+        <template v-if="contributing.length">
           Easing off <strong>{{ luxuryNames }}</strong> could free up
           <strong class="amt"><Money :amount="savings" /></strong> this month.
         </template>
@@ -115,6 +125,7 @@ const perDay = computed(() =>
           :category-id="catByName[r.name]?.id || null"
           :classification="classOf(r.name)"
           @toggle-class="toggle(r.name)"
+          @contribution="onContribution(r.name, $event)"
         />
       </div>
     </template>

@@ -24,3 +24,14 @@ export function patchTransaction(id, patch) {
 export function deleteTransaction(id) {
   return client.delete(`/transactions/${id}`)
 }
+
+// PUT /api/transactions/{id}/classification { classification }
+// Per-transaction necessity/luxury override (null inherits the category's).
+// Optional/self-handled: opts out of the global 401 auto-logout.
+export function setTransactionClassification(id, classification) {
+  return client.put(
+    `/transactions/${id}/classification`,
+    { classification },
+    { skipAuthLogout: true },
+  )
+}

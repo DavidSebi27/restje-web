@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { listTransactions } from '@/api/transactions'
+import { ref, computed, watch } from 'vue'
+import { listTransactions, setTransactionClassification } from '@/api/transactions'
 import Money from '@/components/atoms/Money.vue'
 
 const props = defineProps({
@@ -8,20 +8,42 @@ const props = defineProps({
   glyph: { type: String, default: '' },
   spent: { type: [Number, String], default: 0 },
   categoryId: { type: String, default: null },
-  classification: { type: String, default: 'necessity' }, // 'luxury' | 'necessity'
+  classification: { type: String, default: 'necessity' }, // category-level
 })
-defineEmits(['toggle-class'])
+const emit = defineEmits(['toggle-class', 'contribution'])
 
 const expanded = ref(false)
 const txns = ref([])
 const loaded = ref(false)
 const loading = ref(false)
+const overrides = ref({}) // txnId -> 'luxury' | 'necessity'
 
 function txnName(t) {
   const n = t.counterparty
   if (n && !/^not\s*provided$/i.test(n.trim())) return n
   return t.transactionType || '—'
 }
+
+// A payment's effective class: its override, else its stored value, else the
+// category's class.
+function effClass(t) {
+  return (
+    overrides.value[t.id] ||
+    (t.classification ? String(t.classification).toLowerCase() : props.classification)
+  )
+}
+
+// What this category contributes to "could free up": once expanded, sum the
+// luxury debits exactly; before that, the whole spend if the category is luxury.
+const contribution = computed(() => {
+  if (loaded.value && txns.value.length) {
+    return txns.value
+      .filter((t) => Number(t.amount) < 0 && effClass(t) === 'luxury')
+      .reduce((s, t) => s + Math.abs(Number(t.amount)), 0)
+  }
+  return props.classification === 'luxury' ? Math.abs(Number(props.spent)) : 0
+})
+watch(contribution, (v) => emit('contribution', v), { immediate: true })
 
 async function toggleExpand() {
   expanded.value = !expanded.value
@@ -35,6 +57,12 @@ async function toggleExpand() {
       loading.value = false
     }
   }
+}
+
+function toggleTxn(t) {
+  const next = effClass(t) === 'luxury' ? 'necessity' : 'luxury'
+  overrides.value = { ...overrides.value, [t.id]: next }
+  setTransactionClassification(t.id, next.toUpperCase()).catch(() => {})
 }
 </script>
 
@@ -68,7 +96,15 @@ async function toggleExpand() {
           <span class="tname">{{ txnName(t) }}</span>
           <span class="date">{{ t.bookingDate }}</span>
         </span>
-        <Money :amount="t.amount" colour />
+        <Money class="tamt" :amount="t.amount" colour />
+        <button
+          type="button"
+          class="tag small"
+          :class="effClass(t)"
+          @click="toggleTxn(t)"
+        >
+          {{ effClass(t) }}
+        </button>
       </div>
     </div>
   </div>
@@ -134,6 +170,10 @@ async function toggleExpand() {
   color: var(--c-text-muted);
   min-width: 5.5rem;
 }
+.tag.small {
+  min-width: 4.5rem;
+  padding: 1px var(--space-2);
+}
 .tag.luxury {
   border-color: var(--c-accent);
   color: var(--c-accent);
@@ -148,8 +188,7 @@ async function toggleExpand() {
 .txn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-1) 0;
   font-size: var(--text-sm);
 }
@@ -157,6 +196,7 @@ async function toggleExpand() {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 .tname {
   overflow: hidden;
@@ -167,5 +207,9 @@ async function toggleExpand() {
   color: var(--c-text-muted);
   font-variant-numeric: tabular-nums;
   font-size: var(--text-xs);
+}
+.tamt {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 </style>
