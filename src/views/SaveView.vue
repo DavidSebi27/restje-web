@@ -5,6 +5,7 @@ import { useCategoriesStore } from '@/stores/categories'
 import { setCategoryClassification } from '@/api/categories'
 import { categoryGlyph } from '@/utils/categoryEmoji'
 import Money from '@/components/atoms/Money.vue'
+import CategorySpendRow from '@/components/molecules/CategorySpendRow.vue'
 
 const dashboard = useDashboardStore()
 const categories = useCategoriesStore()
@@ -105,18 +106,16 @@ const perDay = computed(() =>
       </div>
 
       <div class="cats">
-        <div v-for="r in rows" :key="r.name" class="cat">
-          <span class="cat-name">{{ r.glyph }} {{ r.name }}</span>
-          <Money class="cat-amt" :amount="r.spent" />
-          <button
-            type="button"
-            class="tag"
-            :class="classOf(r.name)"
-            @click="toggle(r.name)"
-          >
-            {{ classOf(r.name) }}
-          </button>
-        </div>
+        <CategorySpendRow
+          v-for="r in rows"
+          :key="r.name"
+          :name="r.name"
+          :glyph="r.glyph"
+          :spent="r.spent"
+          :category-id="catByName[r.name]?.id || null"
+          :classification="classOf(r.name)"
+          @toggle-class="toggle(r.name)"
+        />
       </div>
     </template>
 
@@ -182,38 +181,6 @@ h1 {
 .summary.empty {
   color: var(--c-text-muted);
   font-size: var(--text-sm);
-}
-.cat {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--c-border);
-}
-.cat-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cat-amt {
-  font-variant-numeric: tabular-nums;
-  color: var(--c-text-muted);
-}
-.tag {
-  border: 1px solid var(--c-border);
-  border-radius: 999px;
-  padding: 2px var(--space-3);
-  font-size: var(--text-xs);
-  cursor: pointer;
-  text-transform: lowercase;
-  background: transparent;
-  color: var(--c-text-muted);
-  min-width: 5.5rem;
-}
-.tag.luxury {
-  border-color: var(--c-accent);
-  color: var(--c-accent);
 }
 .empty-state {
   color: var(--c-text-muted);
