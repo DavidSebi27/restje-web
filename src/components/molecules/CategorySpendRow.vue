@@ -9,6 +9,7 @@ const props = defineProps({
   spent: { type: [Number, String], default: 0 },
   categoryId: { type: String, default: null },
   classification: { type: String, default: 'necessity' }, // category-level
+  month: { type: String, default: null }, // yyyy-MM — scope to this month
 })
 const emit = defineEmits(['toggle-class', 'contribution'])
 
@@ -50,7 +51,9 @@ async function toggleExpand() {
   if (expanded.value && !loaded.value && props.categoryId) {
     loading.value = true
     try {
-      const { data } = await listTransactions({ category: props.categoryId, size: 200 })
+      const params = { category: props.categoryId, size: 200 }
+      if (props.month) params.month = props.month // scope to this month
+      const { data } = await listTransactions(params)
       txns.value = data.content ?? data
       loaded.value = true
     } finally {

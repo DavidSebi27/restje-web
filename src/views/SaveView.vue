@@ -18,6 +18,12 @@ onMounted(() => {
 const eur = (n) =>
   new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(n)
 
+// The Save tab is about this month; scope the expanded payments to it so the
+// totals match the (this-month) category figures.
+const month = computed(() =>
+  (dashboard.data?.date || new Date().toISOString().slice(0, 10)).slice(0, 7),
+)
+
 // Classification is a per-user category field on the backend (NECESSITY/LUXURY),
 // defaulting from the category kind. Overrides hold optimistic UI changes.
 const overrides = ref({})
@@ -124,6 +130,7 @@ const perDay = computed(() =>
           :spent="r.spent"
           :category-id="catByName[r.name]?.id || null"
           :classification="classOf(r.name)"
+          :month="month"
           @toggle-class="toggle(r.name)"
           @contribution="onContribution(r.name, $event)"
         />
