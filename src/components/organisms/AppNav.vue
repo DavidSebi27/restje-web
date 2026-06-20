@@ -6,7 +6,6 @@ const tabs = [
   { to: '/', label: 'Today', jp: '今日' },
   { to: '/upcoming', label: 'Upcoming', jp: '予定' },
   { to: '/save', label: 'Save', jp: '貯金' },
-  { to: '/import', label: 'Import', jp: '取込' },
   { to: '/settings', label: 'Settings', jp: '設定' },
 ]
 </script>
