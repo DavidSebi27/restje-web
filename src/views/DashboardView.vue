@@ -56,7 +56,15 @@ async function onChanged() {
   <main class="dashboard">
     <header class="topbar">
       <span class="brand">Restje<span class="brand-jp">残り</span></span>
-      <button class="logout" @click="auth.logout">Log out</button>
+      <div class="actions">
+        <RouterLink to="/search" class="icon-btn" aria-label="Search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.5" y2="16.5" />
+          </svg>
+        </RouterLink>
+        <button class="logout" @click="auth.logout">Log out</button>
+      </div>
     </header>
 
     <template v-if="store.data">
@@ -144,6 +152,16 @@ async function onChanged() {
 .brand-jp {
   font-size: var(--text-sm);
   color: var(--c-accent);
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-text-muted);
 }
 .logout {
   background: none;

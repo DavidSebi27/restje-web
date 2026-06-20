@@ -7,6 +7,7 @@ const routes = [
   { path: '/', component: () => import('@/views/DashboardView.vue') },
   { path: '/upcoming', component: () => import('@/views/UpcomingView.vue') },
   { path: '/save', component: () => import('@/views/SaveView.vue') },
+  { path: '/search', component: () => import('@/views/SearchView.vue') },
   { path: '/import', component: () => import('@/views/ImportView.vue') },
   { path: '/settings', component: () => import('@/views/SettingsView.vue') },
 ]
