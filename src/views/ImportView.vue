@@ -5,11 +5,13 @@ import { importCsv } from '@/api/transactions'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useBudgetStore } from '@/stores/budget'
 import { useKnownAccountsStore } from '@/stores/knownAccounts'
+import { useOnboardingStore } from '@/stores/onboarding'
 import ImportDropzone from '@/components/organisms/ImportDropzone.vue'
 
 const dashboard = useDashboardStore()
 const budget = useBudgetStore()
 const knownAccounts = useKnownAccountsStore()
+const onboarding = useOnboardingStore()
 const router = useRouter()
 
 const result = ref(null)
@@ -35,6 +37,7 @@ async function onFile(file) {
         dayOfMonth: r.dayOfMonth,
         categoryId: null,
       }))
+      onboarding.setDerivation(d) // detected income sources / one-offs for the screen
       router.push('/onboarding')
       return
     }

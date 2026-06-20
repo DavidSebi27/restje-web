@@ -1,8 +1,9 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBudgetStore } from '@/stores/budget'
 import { useDashboardStore } from '@/stores/dashboard'
+import { useOnboardingStore } from '@/stores/onboarding'
 import { confirmOnboarding } from '@/api/onboarding'
 
 // First-run confirmation screen. The import seeds the budget store with derived
@@ -10,8 +11,21 @@ import { confirmOnboarding } from '@/api/onboarding'
 // then we commit via /api/onboarding/confirm.
 const budget = useBudgetStore()
 const dashboard = useDashboardStore()
+const onboarding = useOnboardingStore()
 const router = useRouter()
 const saving = ref(false)
+
+const eur = (n) =>
+  new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(
+    Number(n) || 0,
+  )
+const incomeMissing = computed(() => !(Number(budget.monthlyIncome) > 0))
+
+// Pull a detected one-off inflow into the monthly income figure.
+function includeOneOff(inflow, index) {
+  budget.monthlyIncome = (Number(budget.monthlyIncome) || 0) + Number(inflow.amount)
+  onboarding.oneOffInflows.splice(index, 1)
+}
 
 onMounted(() => {
   // Only fetch if we arrived without seeded suggestions (e.g. direct nav).
@@ -59,6 +73,31 @@ async function confirm() {
       <span>Monthly income</span>
       <input v-model="budget.monthlyIncome" type="number" inputmode="decimal" />
     </label>
+
+    <p v-if="incomeMissing" class="warn">
+      Income is €0, so your daily number will be negative. Set your real monthly
+      income above.
+    </p>
+
+    <div v-if="onboarding.incomeSources.length" class="detected">
+      <span class="d-title">Detected income</span>
+      <div v-for="s in onboarding.incomeSources" :key="s.label" class="d-row">
+        <span class="d-label">{{ s.label }}</span>
+        <span class="d-amt">{{ eur(s.monthlyMedian) }}/mo · {{ s.occurrences }}×</span>
+      </div>
+    </div>
+
+    <div v-if="onboarding.oneOffInflows.length" class="detected">
+      <span class="d-title">One-off money in — not counted as income</span>
+      <div v-for="(o, i) in onboarding.oneOffInflows" :key="i" class="d-row">
+        <span class="d-label">{{ o.label }}</span>
+        <span class="d-right">
+          <span class="d-amt">{{ eur(o.amount) }}</span>
+          <button type="button" class="incl" @click="includeOneOff(o, i)">+ add</button>
+        </span>
+      </div>
+    </div>
+
     <label>
       <span>Savings target / month</span>
       <input v-model="budget.savingsTarget" type="number" inputmode="decimal" />
@@ -115,6 +154,60 @@ input {
   border-radius: var(--radius-sm);
   background: var(--c-bg);
   color: var(--c-text);
+}
+.warn {
+  color: var(--c-bad);
+  background: var(--c-bad-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-3);
+}
+.detected {
+  background: var(--c-surface);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+}
+.d-title {
+  display: block;
+  color: var(--c-text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-2);
+}
+.d-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 2px 0;
+}
+.d-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.d-amt {
+  color: var(--c-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.d-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.incl {
+  border: 1px solid var(--c-good);
+  color: var(--c-good);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: 1px var(--space-2);
+  cursor: pointer;
+  font-size: var(--text-xs);
 }
 .recurring-row {
   display: flex;
