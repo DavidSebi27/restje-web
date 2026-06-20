@@ -94,7 +94,20 @@ async function onChanged() {
       <TransactionList :transactions="listTransactions" @changed="onChanged" />
     </template>
 
-    <p v-else-if="store.loading" class="state">Loading…</p>
+    <div v-else-if="store.loading" class="skeleton" aria-hidden="true">
+      <div class="sk-hero">
+        <div class="sk sk-num"></div>
+        <div class="sk sk-line"></div>
+        <div class="sk sk-bar"></div>
+      </div>
+      <div class="stats">
+        <div class="sk sk-card"></div>
+        <div class="sk sk-card"></div>
+      </div>
+      <div class="sk sk-row"></div>
+      <div class="sk sk-row"></div>
+      <div class="sk sk-row"></div>
+    </div>
 
     <section v-else-if="store.error === 'NEEDS_IMPORT'" class="state setup">
       <p class="big">The cosmos is vast and indifferent.</p>
@@ -218,5 +231,50 @@ async function onChanged() {
   background: var(--c-accent);
   color: #fff;
   font-weight: 600;
+}
+
+/* Loading skeleton */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.sk {
+  background: var(--c-surface);
+  border-radius: var(--radius-sm);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.sk-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-12) 0 var(--space-8);
+}
+.sk-num {
+  width: 11rem;
+  height: 3.5rem;
+}
+.sk-line {
+  width: 8rem;
+  height: 1rem;
+}
+.sk-bar {
+  width: 13rem;
+  height: 6px;
+  border-radius: 999px;
+}
+.sk-card {
+  flex: 1;
+  height: 4.5rem;
+  border-radius: var(--radius);
+}
+.sk-row {
+  height: 2.5rem;
+  margin: var(--space-2) var(--space-4);
 }
 </style>

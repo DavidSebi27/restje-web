@@ -93,6 +93,7 @@ function toggleTxn(t) {
       </button>
     </div>
 
+    <Transition name="reveal">
     <div v-if="expanded" class="txns">
       <p v-if="loading" class="loading">Loading…</p>
       <div v-for="t in txns" :key="t.id" class="txn">
@@ -111,6 +112,7 @@ function toggleTxn(t) {
         </button>
       </div>
     </div>
+    </Transition>
   </div>
 </template>
 
@@ -179,11 +181,20 @@ function toggleTxn(t) {
   padding: 1px var(--space-2);
 }
 .tag.luxury {
-  border-color: var(--c-accent);
-  color: var(--c-accent);
+  border-color: var(--c-luxury);
+  color: var(--c-luxury);
 }
 .txns {
   padding: 0 0 var(--space-3) calc(1em + var(--space-2));
+}
+.reveal-enter-active,
+.reveal-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.reveal-enter-from,
+.reveal-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 .loading {
   color: var(--c-text-muted);

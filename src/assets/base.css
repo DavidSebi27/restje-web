@@ -16,6 +16,7 @@
   --c-bad-soft: #2a141a;
   --c-accent: #e23250; /* crimson brand */
   --c-on-accent: #fbf1f2; /* ink on crimson */
+  --c-luxury: #d8a24a; /* amber — optional spend (kept distinct from danger red) */
 
   /* Type scale */
   --text-xs: 0.75rem;

@@ -9,7 +9,16 @@ const props = defineProps({
 })
 
 const remaining = computed(() => Number(props.todayRemaining))
+const allowance = computed(() => Number(props.dailyAllowance))
+const spent = computed(() => Number(props.todaySpent))
 const isOver = computed(() => remaining.value < 0)
+
+// How much of today's allowance is used up — drives the slim progress bar.
+const pct = computed(() => {
+  if (isOver.value) return 100
+  if (allowance.value <= 0) return 0
+  return Math.max(0, Math.min(100, (spent.value / allowance.value) * 100))
+})
 
 const eur = (n) =>
   new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(n)
@@ -23,6 +32,7 @@ const amount = computed(
   <section class="hero" :class="{ over: isOver }">
     <p class="amount">{{ amount }}</p>
     <p class="status">{{ isOver ? 'Over budget today' : 'Safe to spend today' }}</p>
+    <div class="bar"><div class="fill" :style="{ width: pct + '%' }"></div></div>
     <p class="detail">
       {{ eur(Number(dailyAllowance)) }} allowance · {{ eur(Number(todaySpent)) }} spent
     </p>
@@ -56,6 +66,20 @@ const amount = computed(
   margin: var(--space-3) 0 0;
   font-size: var(--text-base);
   color: var(--c-text);
+}
+.bar {
+  width: min(220px, 62%);
+  height: 6px;
+  border-radius: 999px;
+  background: var(--c-surface);
+  overflow: hidden;
+  margin: var(--space-4) auto 0;
+}
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ink);
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .detail {
   margin: var(--space-2) 0 0;

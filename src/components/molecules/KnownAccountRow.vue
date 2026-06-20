@@ -101,6 +101,7 @@ async function onTreatment(e) {
       </select>
     </div>
 
+    <Transition name="reveal">
     <div v-if="expanded" class="txns">
       <p v-if="loadingTxns" class="loading">Loading…</p>
       <div v-for="t in txns" :key="t.id" class="txn">
@@ -111,6 +112,7 @@ async function onTreatment(e) {
         <Money :amount="t.amount" colour />
       </div>
     </div>
+    </Transition>
   </div>
 </template>
 
@@ -187,6 +189,15 @@ select.unset {
 }
 .txns {
   padding: 0 0 var(--space-3) calc(1em + var(--space-2));
+}
+.reveal-enter-active,
+.reveal-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.reveal-enter-from,
+.reveal-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 .loading {
   color: var(--c-text-muted);
