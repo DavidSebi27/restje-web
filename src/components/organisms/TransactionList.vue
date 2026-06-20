@@ -2,6 +2,7 @@
 import { onMounted } from 'vue'
 import { useCategoriesStore } from '@/stores/categories'
 import { useTransactionsStore } from '@/stores/transactions'
+import { useToastStore } from '@/stores/toast'
 import TransactionRow from '@/components/molecules/TransactionRow.vue'
 
 defineProps({ transactions: { type: Array, required: true } })
@@ -11,12 +12,32 @@ const emit = defineEmits(['changed'])
 
 const categories = useCategoriesStore()
 const txStore = useTransactionsStore()
+const toast = useToastStore()
 
 onMounted(() => categories.load())
 
-async function onReclassify({ id, categoryId }) {
-  await txStore.reclassify(id, categoryId)
-  emit('changed')
+async function onReclassify({ id, categoryId, previousCategoryId, merchant }) {
+  try {
+    await txStore.reclassify(id, categoryId)
+    emit('changed')
+    const opts = { ms: 6000 }
+    if (previousCategoryId) {
+      opts.action = {
+        label: 'Undo',
+        fn: async () => {
+          try {
+            await txStore.reclassify(id, previousCategoryId)
+            emit('changed')
+          } catch {
+            toast.show('Couldn’t undo. Try again.')
+          }
+        },
+      }
+    }
+    toast.show(`Recategorised ${merchant || 'transaction'}.`, opts)
+  } catch {
+    toast.show('Couldn’t recategorise. Try again.')
+  }
 }
 </script>
 

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { categoryGlyph } from '@/utils/categoryEmoji'
+import { formatDate } from '@/utils/date'
 import Money from '@/components/atoms/Money.vue'
 import CategoryPill from '@/components/atoms/CategoryPill.vue'
 
@@ -43,7 +44,12 @@ function choose(e) {
   const categoryId = e.target.value
   picking.value = false
   if (categoryId && categoryId !== String(props.transaction.categoryId)) {
-    emit('reclassify', { id: props.transaction.id, categoryId })
+    emit('reclassify', {
+      id: props.transaction.id,
+      categoryId,
+      previousCategoryId: props.transaction.categoryId ?? null,
+      merchant: merchant.value,
+    })
   }
 }
 </script>
@@ -53,7 +59,7 @@ function choose(e) {
     <div class="main">
       <div class="meta">
         <span class="merchant">{{ merchant }}</span>
-        <span class="date">{{ transaction.bookingDate }}</span>
+        <span class="date">{{ formatDate(transaction.bookingDate) }}</span>
       </div>
       <div class="right">
         <Money class="amount" :amount="transaction.amount" colour />

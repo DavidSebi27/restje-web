@@ -2,7 +2,11 @@
 import { ref, computed } from 'vue'
 import { updateKnownAccount } from '@/api/knownAccounts'
 import { listTransactions } from '@/api/transactions'
+import { formatDate } from '@/utils/date'
+import { useToastStore } from '@/stores/toast'
 import Money from '@/components/atoms/Money.vue'
+
+const toast = useToastStore()
 
 const props = defineProps({ account: { type: Object, required: true } })
 const emit = defineEmits(['changed'])
@@ -57,6 +61,8 @@ async function onTreatment(e) {
       categoryId: props.account.categoryId ?? null,
     })
     emit('changed')
+  } catch {
+    toast.show('Couldn’t update that account. Try again.')
   } finally {
     saving.value = false
   }
@@ -100,7 +106,7 @@ async function onTreatment(e) {
       <div v-for="t in txns" :key="t.id" class="txn">
         <span class="tmeta">
           <span class="tname">{{ txnName(t) }}</span>
-          <span class="date">{{ t.bookingDate }}</span>
+          <span class="date">{{ formatDate(t.bookingDate) }}</span>
         </span>
         <Money :amount="t.amount" colour />
       </div>

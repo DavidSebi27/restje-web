@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { listTransactions, setTransactionClassification } from '@/api/transactions'
+import { formatDate } from '@/utils/date'
 import Money from '@/components/atoms/Money.vue'
 
 const props = defineProps({
@@ -97,7 +98,7 @@ function toggleTxn(t) {
       <div v-for="t in txns" :key="t.id" class="txn">
         <span class="tmeta">
           <span class="tname">{{ txnName(t) }}</span>
-          <span class="date">{{ t.bookingDate }}</span>
+          <span class="date">{{ formatDate(t.bookingDate) }}</span>
         </span>
         <Money class="tamt" :amount="t.amount" colour />
         <button

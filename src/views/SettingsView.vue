@@ -3,12 +3,14 @@ import { onMounted, ref } from 'vue'
 import { useBudgetStore } from '@/stores/budget'
 import { useDashboardStore } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 import { resetAccountData, deleteAccount } from '@/api/account'
 import KnownAccountsManager from '@/components/organisms/KnownAccountsManager.vue'
 
 const budget = useBudgetStore()
 const dashboard = useDashboardStore()
 const auth = useAuthStore()
+const toast = useToastStore()
 const saving = ref(false)
 const saved = ref(false)
 const newRow = ref({ name: '', amount: '', day: '' })
@@ -64,6 +66,8 @@ async function onSave() {
     await budget.save()
     await dashboard.load() // budget changes move the daily number
     saved.value = true
+  } catch {
+    toast.show('Couldn’t save the budget. Try again.')
   } finally {
     saving.value = false
   }
@@ -81,26 +85,40 @@ function rowPayload(r) {
 }
 
 async function onSaveRow(r) {
-  await budget.saveRecurring(r.id, rowPayload(r))
-  await dashboard.load()
+  try {
+    await budget.saveRecurring(r.id, rowPayload(r))
+    await dashboard.load()
+    toast.show('Saved.')
+  } catch {
+    toast.show('Couldn’t save that bill. Try again.')
+  }
 }
 
 async function onAddRow() {
   if (!newRow.value.name || !newRow.value.amount) return
-  await budget.addRecurring({
-    name: newRow.value.name,
-    amount: newRow.value.amount,
-    dayOfMonth: Number(newRow.value.day) || 1,
-    categoryId: null,
-    active: true,
-  })
-  newRow.value = { name: '', amount: '', day: '' }
-  await dashboard.load()
+  try {
+    await budget.addRecurring({
+      name: newRow.value.name,
+      amount: newRow.value.amount,
+      dayOfMonth: Number(newRow.value.day) || 1,
+      categoryId: null,
+      active: true,
+    })
+    newRow.value = { name: '', amount: '', day: '' }
+    await dashboard.load()
+    toast.show('Bill added.')
+  } catch {
+    toast.show('Couldn’t add that bill. Try again.')
+  }
 }
 
 async function onRemoveRow(r) {
-  await budget.removeRecurring(r.id)
-  await dashboard.load()
+  try {
+    await budget.removeRecurring(r.id)
+    await dashboard.load()
+  } catch {
+    toast.show('Couldn’t remove that bill. Try again.')
+  }
 }
 </script>
 
