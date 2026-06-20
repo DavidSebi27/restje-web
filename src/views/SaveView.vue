@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
-import { useDashboardStore } from '@/stores/dashboard'
+import { useDashboardStore, today } from '@/stores/dashboard'
 import { useCategoriesStore } from '@/stores/categories'
 import { setCategoryClassification } from '@/api/categories'
 import { categoryGlyph } from '@/utils/categoryEmoji'
@@ -11,7 +11,7 @@ const dashboard = useDashboardStore()
 const categories = useCategoriesStore()
 
 onMounted(() => {
-  if (!dashboard.data) dashboard.load()
+  dashboard.load(today()) // Save is always about the current month
   categories.load()
 })
 

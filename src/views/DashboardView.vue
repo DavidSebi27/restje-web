@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
-import { useDashboardStore } from '@/stores/dashboard'
+import { useDashboardStore, today } from '@/stores/dashboard'
 import { useAuthStore } from '@/stores/auth'
 import { useCategoriesStore } from '@/stores/categories'
 import { useTransactionsStore } from '@/stores/transactions'
@@ -19,18 +19,47 @@ const budget = useBudgetStore()
 // The selected "Where it went" category filters the list below it.
 const selected = ref(null) // { key, label, id }
 
-// load() runs on every dashboard mount: open the app, see today's truth.
+// Opening the dashboard always resets to the current month.
 onMounted(() => {
-  store.load()
+  store.load(today())
   categories.load()
   budget.load()
 })
+
+// --- month navigation ---
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+]
+const currentYm = today().slice(0, 7)
+const viewYm = computed(() => store.viewDate.slice(0, 7))
+const isCurrentMonth = computed(() => viewYm.value === currentYm)
+const monthLabel = computed(() => {
+  const [y, m] = store.viewDate.split('-').map(Number)
+  return `${MONTHS[m - 1]} ${y}`
+})
+
+function stepMonth(delta) {
+  const [y, m] = store.viewDate.split('-').map(Number)
+  let ny = y
+  let nm = m + delta
+  if (nm < 1) { nm = 12; ny -= 1 }
+  if (nm > 12) { nm = 1; ny += 1 }
+  const ym = `${ny}-${String(nm).padStart(2, '0')}`
+  clearCategory()
+  if (ym >= currentYm) {
+    store.load(today()) // never go into the future; the current month means today
+  } else {
+    const lastDay = new Date(ny, nm, 0).getDate() // full month -> month-to-date = whole month
+    store.load(`${ym}-${String(lastDay).padStart(2, '0')}`)
+  }
+}
 
 async function selectCategory(row) {
   if (selected.value?.key === row.key) return clearCategory()
   const cat = categories.items.find((c) => c.name === row.key)
   selected.value = { key: row.key, label: row.label, id: cat?.id ?? null }
-  if (cat) await txStore.load({ category: cat.id, size: 200 })
+  if (cat) await txStore.load({ category: cat.id, month: viewYm.value, size: 200 })
 }
 
 function clearCategory() {
@@ -48,7 +77,8 @@ const listTransactions = computed(() => {
 
 async function onChanged() {
   await store.load() // a reclassify can move the daily number
-  if (selected.value?.id) await txStore.load({ category: selected.value.id, size: 200 })
+  if (selected.value?.id)
+    await txStore.load({ category: selected.value.id, month: viewYm.value, size: 200 })
 }
 </script>
 
@@ -68,26 +98,53 @@ async function onChanged() {
     </header>
 
     <template v-if="store.data">
-      <DailyAllowanceHero
-        :today-remaining="store.data.todayRemaining"
-        :daily-allowance="store.data.dailyAllowance"
-        :today-spent="store.data.todaySpent"
-      />
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-label">Income</span>
-          <Money
-            class="stat-val"
-            :amount="store.data.monthIncome || budget.monthlyIncome || 0"
-          />
-          <span class="stat-sub">this month</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Left this month</span>
-          <Money class="stat-val" :amount="store.data.monthRemaining" colour />
-          <span class="stat-sub">over {{ store.data.daysLeft }} days</span>
-        </div>
+      <div class="month-nav">
+        <button class="mn-btn" aria-label="Previous month" @click="stepMonth(-1)">
+          ‹
+        </button>
+        <span class="mn-label">{{ monthLabel }}</span>
+        <button
+          class="mn-btn"
+          aria-label="Next month"
+          :disabled="isCurrentMonth"
+          @click="stepMonth(1)"
+        >
+          ›
+        </button>
       </div>
+
+      <template v-if="isCurrentMonth">
+        <DailyAllowanceHero
+          :today-remaining="store.data.todayRemaining"
+          :daily-allowance="store.data.dailyAllowance"
+          :today-spent="store.data.todaySpent"
+        />
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-label">Income</span>
+            <Money
+              class="stat-val"
+              :amount="store.data.monthIncome || budget.monthlyIncome || 0"
+            />
+            <span class="stat-sub">this month</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Left this month</span>
+            <Money class="stat-val" :amount="store.data.monthRemaining" colour />
+            <span class="stat-sub">over {{ store.data.daysLeft }} days</span>
+          </div>
+        </div>
+      </template>
+
+      <section v-else class="month-summary">
+        <p class="ms-label">Spent in {{ monthLabel }}</p>
+        <p class="ms-amount"><Money :amount="store.data.monthSpent" /></p>
+        <p class="ms-sub">
+          of <Money :amount="store.data.discretionaryMonthly" /> budget ·
+          <Money :amount="store.data.monthRemaining" colour /> left
+        </p>
+      </section>
+
       <CategoryBreakdown
         :categories="store.data.byCategory || []"
         :selected-key="selected?.key || null"
@@ -168,6 +225,57 @@ async function onChanged() {
   border: none;
   color: var(--c-text-muted);
   cursor: pointer;
+}
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4) 0;
+}
+.mn-btn {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mn-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.mn-label {
+  font-size: var(--text-sm);
+  color: var(--c-text-muted);
+  min-width: 9rem;
+  text-align: center;
+}
+.month-summary {
+  text-align: center;
+  padding: var(--space-8) var(--space-4) var(--space-6);
+}
+.ms-label {
+  margin: 0;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-muted);
+}
+.ms-amount {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ms-sub {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--c-text-muted);
 }
 .stats {
   display: flex;
