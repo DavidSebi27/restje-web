@@ -38,6 +38,9 @@ const monthLabel = computed(() => {
   const [y, m] = store.viewDate.split('-').map(Number)
   return `${MONTHS[m - 1]} ${y}`
 })
+// What's left/over that month — varies even with a fixed budget, unlike the
+// budget figure itself.
+const pastRemaining = computed(() => Number(store.data?.monthRemaining ?? 0))
 
 function stepMonth(delta) {
   const [y, m] = store.viewDate.split('-').map(Number)
@@ -139,9 +142,9 @@ async function onChanged() {
       <section v-else class="month-summary">
         <p class="ms-label">Spent in {{ monthLabel }}</p>
         <p class="ms-amount"><Money :amount="store.data.monthSpent" /></p>
-        <p class="ms-sub">
-          of <Money :amount="store.data.discretionaryMonthly" /> budget ·
-          <Money :amount="store.data.monthRemaining" colour /> left
+        <p class="ms-out" :class="{ neg: pastRemaining < 0 }">
+          <Money :amount="Math.abs(pastRemaining)" />
+          {{ pastRemaining < 0 ? 'over budget' : 'left over' }}
         </p>
       </section>
 
@@ -276,6 +279,15 @@ async function onChanged() {
   margin: var(--space-2) 0 0;
   font-size: var(--text-sm);
   color: var(--c-text-muted);
+}
+.ms-out {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--c-good);
+}
+.ms-out.neg {
+  color: var(--c-bad);
 }
 .stats {
   display: flex;
