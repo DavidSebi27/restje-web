@@ -14,15 +14,8 @@ const loading = ref(false)
 const searched = ref(false)
 let timer
 
-function matches(t, term) {
-  const hay = `${t.counterparty || ''} ${t.transactionType || ''} ${
-    t.categoryName || ''
-  } ${Math.abs(Number(t.amount))}`.toLowerCase()
-  return hay.includes(term)
-}
-
 async function run() {
-  const term = q.value.trim().toLowerCase()
+  const term = q.value.trim()
   if (term.length < 2) {
     results.value = []
     searched.value = false
@@ -30,11 +23,9 @@ async function run() {
   }
   loading.value = true
   try {
-    // Pass `q` (used once the backend supports it) and also filter client-side
-    // so it works today over the recent window.
-    const { data } = await listTransactions({ q: q.value.trim(), size: 200 })
-    const rows = data.content ?? data
-    results.value = rows.filter((t) => matches(t, term))
+    // Backend filters by q over full history (counterparty/description/type/amount).
+    const { data } = await listTransactions({ q: term, size: 200 })
+    results.value = data.content ?? data
   } catch {
     results.value = []
   } finally {

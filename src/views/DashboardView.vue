@@ -139,7 +139,10 @@ async function onChanged() {
       <section v-else class="month-summary">
         <p class="ms-label">Spent in {{ monthLabel }}</p>
         <p class="ms-amount"><Money :amount="store.data.monthSpent" /></p>
-        <p class="ms-sub">discretionary spending that month</p>
+        <p class="ms-sub">
+          of <Money :amount="store.data.discretionaryMonthly" /> budget ·
+          <Money :amount="store.data.monthRemaining" colour /> left
+        </p>
       </section>
 
       <CategoryBreakdown
